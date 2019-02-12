@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="11201" systemVersion="15G1004" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES">
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="NTESRoleSelectViewController">
+            <connections>
+                <outlet property="roleAchorButton" destination="8Tu-hf-9ve" id="j3d-lA-U8r"/>
+                <outlet property="roleAudienceButton" destination="yQI-BG-4VV" id="n9T-ha-6XK"/>
+                <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT">
+            <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="login_bg" translatesAutoresizingMaskIntoConstraints="NO" id="Vrz-92-Tqt"/>
+                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="8Tu-hf-9ve">
+                    <constraints>
+                        <constraint firstAttribute="height" constant="45" id="Z2Q-wg-tbT"/>
+                    </constraints>
+                    <inset key="imageEdgeInsets" minX="-75" minY="0.0" maxX="0.0" maxY="0.0"/>
+                    <state key="normal" title="主播端" image="icon_anchor">
+                        <color key="titleColor" red="0.13333333333333333" green="0.58039215686274515" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <state key="highlighted" image="icon_anchor"/>
+                    <connections>
+                        <action selector="beRole:" destination="-1" eventType="touchUpInside" id="RsM-cZ-g0I"/>
+                    </connections>
+                </button>
+                <button opaque="NO" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="yQI-BG-4VV">
+                    <constraints>
+                        <constraint firstAttribute="height" constant="45" id="s6u-7X-byd"/>
+                    </constraints>
+                    <inset key="imageEdgeInsets" minX="-75" minY="0.0" maxX="0.0" maxY="0.0"/>
+                    <state key="normal" title="观众端" image="icon_audience">
+                        <color key="titleColor" red="0.13333333333333333" green="0.58039215686274515" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    </state>
+                    <state key="highlighted" image="icon_audience"/>
+                    <connections>
+                        <action selector="beRole:" destination="-1" eventType="touchUpInside" id="cSC-nz-dxf"/>
+                    </connections>
+                </button>
+                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="请选择你的身份，开始体验" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="p7v-4u-jo0">
+                    <constraints>
+                        <constraint firstAttribute="height" constant="29" id="hgo-p4-HZ1"/>
+                    </constraints>
+                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                    <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                    <nil key="highlightedColor"/>
+                </label>
+            </subviews>
+            <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <constraints>
+                <constraint firstAttribute="trailing" secondItem="yQI-BG-4VV" secondAttribute="trailing" constant="20" id="063-N1-zDN"/>
+                <constraint firstItem="8Tu-hf-9ve" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="20" id="6di-yc-TLf"/>
+                <constraint firstItem="Vrz-92-Tqt" firstAttribute="centerX" secondItem="yQI-BG-4VV" secondAttribute="centerX" id="7wk-lK-fu2"/>
+                <constraint firstItem="Vrz-92-Tqt" firstAttribute="width" secondItem="i5M-Pr-FkT" secondAttribute="width" id="Cgg-Iv-d11"/>
+                <constraint firstItem="Vrz-92-Tqt" firstAttribute="height" secondItem="i5M-Pr-FkT" secondAttribute="height" id="FQE-p5-pCN"/>
+                <constraint firstItem="yQI-BG-4VV" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="JOm-VT-rDA"/>
+                <constraint firstItem="p7v-4u-jo0" firstAttribute="centerX" secondItem="Vrz-92-Tqt" secondAttribute="centerX" id="YUS-Fh-nkQ"/>
+                <constraint firstItem="8Tu-hf-9ve" firstAttribute="top" secondItem="p7v-4u-jo0" secondAttribute="bottom" constant="30" id="ZyA-bL-1n6"/>
+                <constraint firstAttribute="bottom" secondItem="yQI-BG-4VV" secondAttribute="bottom" constant="78" id="csH-sv-fni"/>
+                <constraint firstItem="8Tu-hf-9ve" firstAttribute="centerX" secondItem="i5M-Pr-FkT" secondAttribute="centerX" id="kpd-2U-W5W"/>
+                <constraint firstItem="Vrz-92-Tqt" firstAttribute="top" secondItem="i5M-Pr-FkT" secondAttribute="top" id="miU-D9-xaN"/>
+                <constraint firstItem="yQI-BG-4VV" firstAttribute="top" secondItem="8Tu-hf-9ve" secondAttribute="bottom" constant="20" id="pYC-tB-t6h"/>
+                <constraint firstItem="yQI-BG-4VV" firstAttribute="leading" secondItem="i5M-Pr-FkT" secondAttribute="leading" constant="20" id="w19-q6-9b9"/>
+                <constraint firstAttribute="trailing" secondItem="8Tu-hf-9ve" secondAttribute="trailing" constant="20" id="wr9-dz-dab"/>
+            </constraints>
+            <point key="canvasLocation" x="312.5" y="120.5"/>
+        </view>
+    </objects>
+    <resources>
+        <image name="icon_anchor" width="12" height="15"/>
+        <image name="icon_audience" width="13" height="15"/>
+        <image name="login_bg" width="320" height="568"/>
+    </resources>
+</document>

@@ -1,0 +1,28 @@
+//
+//  NIMLiveDemo-Prefix.pch
+//  NIMLiveDemo
+//
+//  Created by chris on 16/2/25.
+//  Copyright © 2016年 Netease. All rights reserved.
+//
+
+#ifndef NIMLiveDemo_Prefix_pch
+#define NIMLiveDemo_Prefix_pch
+
+#ifdef __OBJC__
+#import <NIMSDK/NIMSDK.h>
+#import <NIMAVChat/NIMAVChat.h>
+#import "NTESGlobalMacro.h"
+#import <CocoaLumberjack/CocoaLumberjack.h>
+
+#ifdef DEBUG
+static DDLogLevel ddLogLevel = DDLogLevelAll;
+#else
+static DDLogLevel ddLogLevel = DDLogLevelAll;
+#endif
+
+#define NTES_USE_CLEAR_BAR - (BOOL)useClearBar{return YES;}
+#define NTES_FORBID_INTERACTIVE_POP - (BOOL)forbidInteractivePop{return YES;}
+
+#endif
+#endif
