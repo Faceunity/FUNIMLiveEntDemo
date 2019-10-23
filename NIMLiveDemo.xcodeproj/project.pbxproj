@@ -205,8 +205,6 @@
 		BD46C81F1D7678F4008D026F /* IJKSDLGLView.m in Sources */ = {isa = PBXBuildFile; fileRef = BD46C8081D7678F4008D026F /* IJKSDLGLView.m */; };
 		E36254D321DCB6ED004A5FD7 /* libnama.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E36254BF21DCB6EC004A5FD7 /* libnama.a */; };
 		E36254D421DCB6ED004A5FD7 /* release_note.txt in Resources */ = {isa = PBXBuildFile; fileRef = E36254C021DCB6EC004A5FD7 /* release_note.txt */; };
-		E36254D521DCB6ED004A5FD7 /* anim_model.bundle in Resources */ = {isa = PBXBuildFile; fileRef = E36254C221DCB6EC004A5FD7 /* anim_model.bundle */; };
-		E36254D621DCB6ED004A5FD7 /* ardata_ex.bundle in Resources */ = {isa = PBXBuildFile; fileRef = E36254C321DCB6EC004A5FD7 /* ardata_ex.bundle */; };
 		E36254D721DCB6ED004A5FD7 /* face_beautification.bundle in Resources */ = {isa = PBXBuildFile; fileRef = E36254C421DCB6EC004A5FD7 /* face_beautification.bundle */; };
 		E36254D821DCB6ED004A5FD7 /* fxaa.bundle in Resources */ = {isa = PBXBuildFile; fileRef = E36254C521DCB6EC004A5FD7 /* fxaa.bundle */; };
 		E36254D921DCB6ED004A5FD7 /* v3.bundle in Resources */ = {isa = PBXBuildFile; fileRef = E36254C621DCB6EC004A5FD7 /* v3.bundle */; };
@@ -591,8 +589,6 @@
 		E36254BE21DCB6EC004A5FD7 /* FURenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FURenderer.h; sourceTree = "<group>"; };
 		E36254BF21DCB6EC004A5FD7 /* libnama.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libnama.a; sourceTree = "<group>"; };
 		E36254C021DCB6EC004A5FD7 /* release_note.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = release_note.txt; sourceTree = "<group>"; };
-		E36254C221DCB6EC004A5FD7 /* anim_model.bundle */ = {isa = PBXFileReference; lastKnownFileType = file; path = anim_model.bundle; sourceTree = "<group>"; };
-		E36254C321DCB6EC004A5FD7 /* ardata_ex.bundle */ = {isa = PBXFileReference; lastKnownFileType = file; path = ardata_ex.bundle; sourceTree = "<group>"; };
 		E36254C421DCB6EC004A5FD7 /* face_beautification.bundle */ = {isa = PBXFileReference; lastKnownFileType = file; path = face_beautification.bundle; sourceTree = "<group>"; };
 		E36254C521DCB6EC004A5FD7 /* fxaa.bundle */ = {isa = PBXFileReference; lastKnownFileType = file; path = fxaa.bundle; sourceTree = "<group>"; };
 		E36254C621DCB6EC004A5FD7 /* v3.bundle */ = {isa = PBXFileReference; lastKnownFileType = file; path = v3.bundle; sourceTree = "<group>"; };
@@ -1322,8 +1318,6 @@
 		E36254C121DCB6EC004A5FD7 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				E36254C221DCB6EC004A5FD7 /* anim_model.bundle */,
-				E36254C321DCB6EC004A5FD7 /* ardata_ex.bundle */,
 				E36254C421DCB6EC004A5FD7 /* face_beautification.bundle */,
 				E36254C521DCB6EC004A5FD7 /* fxaa.bundle */,
 				E36254C621DCB6EC004A5FD7 /* v3.bundle */,
@@ -1365,9 +1359,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 612DF6181C7D47A800B3658E /* Build configuration list for PBXNativeTarget "NIMLiveDemo" */;
 			buildPhases = (
-				CD393AD52212CD9B004FBE68 /* unzip nama */,
-				CD393AD62212D344004FBE68 /* unzip nmc */,
 				F120E054828D1E65742DB4D4 /* [CP] Check Pods Manifest.lock */,
+				E3DA488923603ACC007CF6E3 /* unzip */,
 				612DF5FD1C7D47A800B3658E /* Sources */,
 				612DF5FE1C7D47A800B3658E /* Frameworks */,
 				612DF5FF1C7D47A800B3658E /* Resources */,
@@ -1412,6 +1405,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -1439,7 +1433,6 @@
 				90E7E05B1E1F716F004ACB46 /* icon_load_gif@3x.gif in Resources */,
 				90D9D2641EDEBC8E002E36A7 /* 水印_16.png in Resources */,
 				90D9D26B1EDEBC8E002E36A7 /* 水印_22.png in Resources */,
-				E36254D521DCB6ED004A5FD7 /* anim_model.bundle in Resources */,
 				90D9D2651EDEBC8E002E36A7 /* 水印_17.png in Resources */,
 				90D9D25C1EDEBC8E002E36A7 /* 水印_0.png in Resources */,
 				618395891C96693000A5997D /* Settings.bundle in Resources */,
@@ -1459,7 +1452,6 @@
 				90D9D2631EDEBC8E002E36A7 /* 水印_15.png in Resources */,
 				61C7373C1CAA87FB003E7C68 /* Presents.plist in Resources */,
 				90D9D26D1EDEBC8E002E36A7 /* 水印_4.png in Resources */,
-				E36254D621DCB6ED004A5FD7 /* ardata_ex.bundle in Resources */,
 				6164F6B11E03F5020022C91E /* live_mix_auido_example_2.mp3 in Resources */,
 				90D9D2611EDEBC8E002E36A7 /* 水印_13.png in Resources */,
 				90D9D2691EDEBC8E002E36A7 /* 水印_20.png in Resources */,
@@ -1550,25 +1542,7 @@
 			shellPath = /bin/sh;
 			shellScript = "echo \"$CODESIGNING_FOLDER_PATH\" >/tmp/\"$USER.ident\" && echo \"$CODE_SIGN_IDENTITY\" >>/tmp/\"$USER.ident\" && exit;\n";
 		};
-		CD393AD52212CD9B004FBE68 /* unzip nama */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 12;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "unzip nama";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n#!/bin/sh\ncd Faceunity/FaceUnity-SDK-iOS/\nfilename=libnama.a\nzipname=libnama.a.zip\n#如果libnama.zip存在,直接解压\nif [ -f \"$zipname\" ];\nthen\nrm -f $filename\nunzip $zipname\n\nif [ -f \"$filename\" ]; then\necho \"ssss\"\nrm -f $zipname\nelse\necho \"fffff\"\nrm -f $filename\nfi\nfi\n\n";
-		};
-		CD393AD62212D344004FBE68 /* unzip nmc */ = {
+		E3DA488923603ACC007CF6E3 /* unzip */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1577,14 +1551,14 @@
 			);
 			inputPaths = (
 			);
-			name = "unzip nmc";
+			name = unzip;
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n#!/bin/sh\nfilename=NMC.framework\nzipname=NMC.framework.zip\n#如果libnama.zip存在,直接解压\nif [ -f \"$zipname\" ];\nthen\nrm -f -r  $filename\nunzip $zipname\n\nif [ -d \"$filename\" ]; then\necho \"ssss\"\nrm -f -r $zipname\nelse\necho \"fffff\"\nrm -f -r $filename\nfi\nfi\n";
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n#!/bin/sh/\ncd FaceUnity/FaceUnity-SDK-iOS\nfilename=libnama.a\nzipname=libnama.zip\n\nif [ -f \"$zipname\" ];\nthen\nrm -f $filename\nunzip $zipname\nrm -f $zipname\nfi\n";
 		};
 		F120E054828D1E65742DB4D4 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1864,7 +1838,7 @@
 					"$(SRCROOT)/NIMLiveDemo/Classes/Sections/Common/View",
 				);
 				INFOPLIST_FILE = NIMLiveDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1940,7 +1914,7 @@
 					"$(SRCROOT)/NIMLiveDemo/Classes/Sections/Common/View",
 				);
 				INFOPLIST_FILE = NIMLiveDemo/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
