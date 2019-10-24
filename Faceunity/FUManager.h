@@ -10,7 +10,6 @@
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 
-@class FULiveModel ;
 @interface FUManager : NSObject
 
 @property (nonatomic, assign)               BOOL enableGesture;         /**设置是否开启手势识别，默认未开启*/
@@ -46,8 +45,6 @@
 @property (nonatomic, strong) NSArray<NSString *> *itemsDataSource;  /**道具分类数组*/
 @property (nonatomic, strong) NSString *selectedItem;     /**选中的道具名称*/
 
-@property (nonatomic, assign) BOOL isShown ;
-
 + (FUManager *)shareManager;
 
 /**初始化Faceunity,加载道具*/
@@ -64,8 +61,6 @@
 
 /**将道具绘制到pixelBuffer*/
 - (CVPixelBufferRef)renderItemsToPixelBuffer:(CVPixelBufferRef)pixelBuffer;
-
-/* 针对腾讯兼容接口*/
 - (int)renderItemWithTexture:(int)texture Width:(int)width Height:(int)height ;
 
 /**获取75个人脸特征点*/
@@ -84,6 +79,8 @@
 
 /**切换摄像头要调用此函数*/
 - (void)onCameraChange;
+/* 水平镜像翻转 */
+-(void)changeFlipx;
 
 /**获取错误信息*/
 - (NSString *)getError;

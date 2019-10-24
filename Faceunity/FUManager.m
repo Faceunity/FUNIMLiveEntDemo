@@ -17,6 +17,8 @@
     int items[3];
     int frameID;
 }
+
+@property (assign,nonatomic) BOOL flipx;
 @end
 
 static FUManager *shareManager = NULL;
@@ -43,17 +45,6 @@ static FUManager *shareManager = NULL;
          还有设置为YES,则需要调用FURenderer.h中的接口，不能再调用funama.h中的接口。*/
         [[FURenderer shareRenderer] setupWithDataPath:path authPackage:&g_auth_package authSize:sizeof(g_auth_package) shouldCreateContext:YES];
         
-        // 开启表情跟踪优化功能
-        NSData *animModelData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"anim_model.bundle" ofType:nil]];
-        int res0 = fuLoadAnimModel((void *)animModelData.bytes, (int)animModelData.length);
-        NSLog(@"fuLoadAnimModel %@",res0 == 0 ? @"failure":@"success" );
-
-        NSData *arModelData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"ardata_ex.bundle" ofType:nil]];
-        
-        
-        int res1 = fuLoadExtendedARData((void *)arModelData.bytes, (int)arModelData.length);
-        
-        NSLog(@"fuLoadAnimModel %@",res1 == 0 ? @"failure":@"success" );
         
        [self setDefaultParameters];
         
@@ -89,8 +80,8 @@ static FUManager *shareManager = NULL;
     self.faceShape              = 4 ;
     self.enlargingLevel         = 0.4 ;
     self.thinningLevel          = 0.4 ;
-    self.enlargingLevel_new         = 0.4 ;
-    self.thinningLevel_new          = 0.4 ;
+    self.enlargingLevel_new     = 1.0 ;
+    self.thinningLevel_new      = 1.0 ;
     
     self.jewLevel               = 0.3 ;
     self.foreheadLevel          = 0.3 ;
@@ -103,11 +94,11 @@ static FUManager *shareManager = NULL;
 
 - (void)loadItems
 {
-    /**加载普通道具*/
-    [self loadItem:self.selectedItem];
-    
     /**加载美颜道具*/
     [self loadFilter];
+    /**加载普通道具*/
+    [self loadItem:self.selectedItem];
+
 }
 
 - (void)setEnableGesture:(BOOL)enableGesture
@@ -150,6 +141,8 @@ static FUManager *shareManager = NULL;
     
     /**销毁道具后，重置默认参数*/
     [self setDefaultParameters];
+    
+
 }
 
 #pragma -Faceunity Load Data
@@ -229,13 +222,15 @@ static FUManager *shareManager = NULL;
     [self setBeautyParams];
     
     /*Faceunity核心接口，将道具及美颜效果绘制到pixelBuffer中，执行完此函数后pixelBuffer即包含美颜及贴纸效果*/
-    CVPixelBufferRef buffer = [[FURenderer shareRenderer] renderPixelBuffer:pixelBuffer withFrameId:frameID items:items itemCount:sizeof(items)/sizeof(int) flipx:NO];//flipx 参数设为YES可以使道具做水平方向的镜像翻转
+    CVPixelBufferRef buffer = [[FURenderer shareRenderer] renderPixelBuffer:pixelBuffer withFrameId:frameID items:items itemCount:sizeof(items)/sizeof(int) flipx:_flipx];//flipx 参数设为YES可以使道具做水平方向的镜像翻转
     
  //   CVPixelBufferRef buffer = [[FURenderer shareRenderer] renderPixelBuffer:pixelBuffer withFrameId:frameID items:items itemCount:3];
     frameID += 1;
     
     return buffer;
 }
+
+/**将道具绘制到pixelBuffer*/
 
 - (int)renderItemWithTexture:(int)texture Width:(int)width Height:(int)height {
     
@@ -331,6 +326,12 @@ static int enabled[10];
 {
     [FURenderer onCameraChange];
 }
+
+/*道具句镜像*/
+-(void)changeFlipx{
+    _flipx = !_flipx;
+}
+
 
 /**获取错误信息*/
 - (NSString *)getError
