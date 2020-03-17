@@ -1,8 +1,6 @@
-# FUNIMLiveEntDemo 快速接入文档
+# FUNIMLiveEntDemo2 快速接入文档
 
-FUNIMLiveEntDemo 是集成了 Faceunity 面部跟踪和虚拟道具功能 和 [云信互动直播demo](https://yunxin.163.com/interact-demo) 。
-
-**由于云信互动直播库较大，运行demo需要先[下载](<https://yunxin.163.com/interact-demo>)库**
+FUNIMLiveEntDemo2 是集成了 Faceunity 面部跟踪和虚拟道具功能 和 [云信互动直播demo](https://yunxin.163.com/interact-demo) 。
 
 本文是 FaceUnity SDK 快速对云信短视频的导读说明，关于 `FaceUnity SDK` 的详细说明，请参看 [FULiveDemo](https://github.com/Faceunity/FULiveDemo/tree/dev)
 

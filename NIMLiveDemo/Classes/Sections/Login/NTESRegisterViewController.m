@@ -163,7 +163,7 @@ NTES_USE_CLEAR_BAR
 #pragma mark - Private
 - (void)resetTextField:(UITextField *)textField{
     textField.tintColor = [UIColor whiteColor];
-    [textField setValue:UIColorFromRGBA(0xffffff, .6f) forKeyPath:@"_placeholderLabel.textColor"];
+//    [textField setValue:UIColorFromRGBA(0xffffff, .6f) forKeyPath:@"_placeholderLabel.textColor"];
     textField.tintColor = [UIColor whiteColor];
     UIButton *clearButton = [textField valueForKey:@"_clearButton"];
     [clearButton setImage:[UIImage imageNamed:@"login_icon_clear"] forState:UIControlStateNormal];
