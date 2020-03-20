@@ -419,6 +419,7 @@ NTES_FORBID_INTERACTIVE_POP
         // 镜像关闭
         [self.mirrorView setMirrorDisabled];
         [self.innerView updateMirrorButton:NO];
+        [FUManager shareManager].flipx = YES;
     }
     else
     {
@@ -433,6 +434,8 @@ NTES_FORBID_INTERACTIVE_POP
         _isFocusOn = NO;
         [self.innerView updateFocusButton:NO];
         self.focusView.hidden = YES;
+        
+        [FUManager shareManager].flipx = NO;
     }
     
     [self.innerView resetZoomSlider];
@@ -1968,7 +1971,7 @@ NTES_FORBID_INTERACTIVE_POP
 // demobar 初始化
 -(FUAPIDemoBar *)demoBar{
     if (!_demoBar) {
-        _demoBar = [[FUAPIDemoBar alloc] initWithFrame:CGRectMake(0, self.view.frame.size.height - 220, self.view.frame.size.width, 164)];
+        _demoBar = [[FUAPIDemoBar alloc] initWithFrame:CGRectMake(0, self.view.frame.size.height - 300, self.view.frame.size.width, 164)];
         
         _demoBar.itemsDataSource = [FUManager shareManager].itemsDataSource;
         _demoBar.selectedItem = [FUManager shareManager].selectedItem ;
