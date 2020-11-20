@@ -26,6 +26,9 @@
 
 - (instancetype)initWithChatroom:(NSString *)chatroomId
                            frame:(CGRect)frame;
+
+- (void)switchToPreviewUI;
+
 - (void)switchToWaitingUI;
 
 - (void)switchToLinkingUI;

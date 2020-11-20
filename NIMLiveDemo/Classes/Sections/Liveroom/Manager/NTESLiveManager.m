@@ -316,11 +316,22 @@
     return ret;
 }
 
+- (NSString *)connectorUidOnMicWithMeetingUid:(UInt64)meetingUid {
+    __block NSString *ret = nil;
+    [_connectorsOnMic enumerateObjectsUsingBlock:^(NTESMicConnector * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (obj.meetingUid == meetingUid) {
+            ret = obj.uid;
+            *stop = YES;
+        }
+    }];
+    return ret;
+}
+
 - (void)delConnectorOnMicWithUid:(NSString *)uid {
     if (!uid) {
         return;
     }
-    
+    NSLog(@"YAT delConnectorOnMicWithUid uid %@",uid);
     __block NSInteger delIndex = -1;
     [_connectorsOnMic enumerateObjectsUsingBlock:^(NTESMicConnector * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         if ([obj.uid isEqualToString:uid]) {

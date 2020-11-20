@@ -53,6 +53,7 @@
         case NTESLiveCustomNotificationTypePkInvalid:
         case NTESLiveCustomNotificationTypePkBusy:
         case NTESLiveCustomNotificationTypePkDidExit:
+        case NTESLiveCustomNotificationTypePkRoomByapssOnlineRequest:
             [self doProcessPkNoticationType:type from:from dict:dict];
             break;
         default:
@@ -157,7 +158,7 @@
     switch (type) {
         case NTESLiveCustomNotificationTypePkOnlineRequest:{
             NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-            DDLogInfo(@"[zgn] 收到 PkOnlineRequest：[%@] -> [%@]", from, member.userId);
+            DDLogInfo(@"YAT 收到 PkOnlineRequest：[%@] -> [%@]", from, member.userId);
             NTESMicConnector *connector = [self connectorWithFrom:from dict:dict];
             if (_delegate && [_delegate respondsToSelector:@selector(didReceivePkOnlineRequestFromUser:)]) {
                 [_delegate didReceivePkOnlineRequestFromUser:connector];
@@ -168,11 +169,11 @@
             
             NTESAnchorPKStatus pkStatus = [NTESLiveManager sharedInstance].pkStatus;
             if (pkStatus != NTESAnchorPKStatusPingInteractive) {
-                DDLogWarn(@"当前状态 %d，不再接收 OnlineResponse 请求", (int)pkStatus);
+                DDLogWarn(@"YAT 当前状态 %d，不再接收 OnlineResponse 请求", (int)pkStatus);
                 return;
             }
             NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-            DDLogInfo(@"[zgn] 收到 PkOnlineResponse：[%@] -> [%@]", from, member.userId);
+            DDLogInfo(@"YAT 收到 PkOnlineResponse：[%@] -> [%@]", from, member.userId);
             NTESMicConnector *connector = [self connectorWithFrom:from dict:dict];
             [NTESLiveManager sharedInstance].dstPkAnchor = connector;
             if (_delegate && [_delegate respondsToSelector:@selector(didReceivePkOnlineResponse)]) {
@@ -187,9 +188,14 @@
                 return;
             }
             NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-            DDLogInfo(@"[zgn] 收到 PkRequest：[%@] -> [%@]", from, member.userId);
-            if (_delegate && [_delegate respondsToSelector:@selector(didReceivePkRequest)]) {
-                [_delegate didReceivePkRequest];
+            DDLogInfo(@"YAT 收到 PkRequest：[%@] -> [%@]", from, member.userId);
+            
+            NSDictionary *info = [dict jsonDict:@"info"];
+            NSString *pushUrl = [info objectForKey:@"push_url"];
+            NSString *layoutParam = [info objectForKey:@"layout_param"];
+
+            if (_delegate && [_delegate respondsToSelector:@selector(didReceivePkRequest:layoutParam:)]) {
+                [_delegate didReceivePkRequest:pushUrl layoutParam:layoutParam];
             }
             break;
         }
@@ -211,7 +217,7 @@
                 return;
             }
             NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-            DDLogInfo(@"[zgn] 收到 PkInvalid：[%@] -> [%@]", from, member.userId);
+            DDLogInfo(@"YAT 收到 PkInvalid：[%@] -> [%@]", from, member.userId);
             if (_delegate && [_delegate respondsToSelector:@selector(didReceivePkInvalid)]) {
                 [_delegate didReceivePkInvalid];
             }
@@ -220,17 +226,20 @@
         case NTESLiveCustomNotificationTypePkBusy: {
             NTESAnchorPKStatus pkStatus = [NTESLiveManager sharedInstance].pkStatus;
             if (pkStatus != NTESAnchorPKStatusPingInteractive) {
-                DDLogWarn(@"当前状态 %d，不再接收 PkBusy 请求", (int)pkStatus);
+                DDLogWarn(@"YAT 当前状态 %d，不再接收 PkBusy 请求", (int)pkStatus);
                 return;
             }
             NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-            DDLogInfo(@"[zgn] 收到 PkBusy：[%@] -> [%@]", from, member.userId);
+            DDLogInfo(@"YAT 收到 PkBusy：[%@] -> [%@]", from, member.userId);
             if (_delegate && [_delegate respondsToSelector:@selector(didReceivePkBusy)]) {
                 [_delegate didReceivePkBusy];
             }
             break;
         }
         case NTESLiveCustomNotificationTypePkDidExit: {
+            NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
+            DDLogInfo(@"YAT 收到 exit：[%@] -> [%@]", from, member.userId);
+
             if (_delegate && [_delegate respondsToSelector:@selector(didReceivePkExit)]) {
                 [_delegate didReceivePkExit];
             }
@@ -239,11 +248,11 @@
         case NTESLiveCustomNotificationTypePkAgree: {
             NTESAnchorPKStatus pkStatus = [NTESLiveManager sharedInstance].pkStatus;
             if (pkStatus != NTESAnchorPKStatusPkInteractive) {
-                DDLogWarn(@"当前状态 %d，不再接收 PkAgree 请求", (int)pkStatus);
+                DDLogWarn(@"YAT 当前状态 %d，不再接收 PkAgree 请求", (int)pkStatus);
                 return;
             }
             NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-            DDLogInfo(@"[zgn] 收到 PkAgree：[%@] -> [%@]", from, member.userId);
+            DDLogInfo(@"YAT 收到 PkAgree：[%@] -> [%@]", from, member.userId);
             NSString *roomName = [dict jsonString:@"room_name"];
             if (_delegate && [_delegate respondsToSelector:@selector(didReceivePkAgreeWithRoomName:)]) {
                 [_delegate didReceivePkAgreeWithRoomName:roomName];
@@ -251,18 +260,31 @@
             break;
         }
         case NTESLiveCustomNotificationTypePkReject: {
+            NTESMicConnector *connector = [self connectorWithFrom:from dict:dict];
+            [NTESLiveManager sharedInstance].dstPkAnchor = connector;
             NTESAnchorPKStatus pkStatus = [NTESLiveManager sharedInstance].pkStatus;
             if (pkStatus != NTESAnchorPKStatusPkInteractive && pkStatus != NTESAnchorPKStatusPingInteractive) {
-                DDLogWarn(@"当前状态 %d，不再接收 PkReject 请求", (int)pkStatus);
+                DDLogWarn(@"YAT 当前状态 %d，不再接收 PkReject 请求", (int)pkStatus);
                 return;
             }
             NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-            DDLogInfo(@"[zgn] 收到 PkReject：[%@] -> [%@]", from, member.userId);
+            DDLogInfo(@"YAT 收到 PkReject：[%@] -> [%@]", from, member.userId);
             if (_delegate && [_delegate respondsToSelector:@selector(didReceivePkReject)]) {
                 [_delegate didReceivePkReject];
             }
             break;
         }
+        case NTESLiveCustomNotificationTypePkRoomByapssOnlineRequest: {
+            NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
+            DDLogInfo(@"YAT 收到 Room Bypass PkOnlineRequest：[%@] -> [%@]", from, member.userId);
+            NTESMicConnector *connector = [self connectorWithFrom:from dict:dict];
+            if (_delegate && [_delegate respondsToSelector:@selector(didReceivePkOnlineRequestFromUser:)]) {
+                [_delegate didReceivePkRoomBypassOnlineRequestFromUser:connector];
+            }
+            break;
+            break;
+        }
+
         default:
             break;
     }

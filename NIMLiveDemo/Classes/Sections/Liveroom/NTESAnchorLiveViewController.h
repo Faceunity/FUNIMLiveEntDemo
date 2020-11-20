@@ -8,29 +8,11 @@
 
 #import <UIKit/UIKit.h>
 #import "NTESMediaCapture.h"
+#import "NTESBypassLiveViewController.h"
 
-@protocol NTESAnchorLiveViewControllerDelegate <NSObject>
+@class NTESFiterStatusModel;
 
--(void)onCloseLiveView;
-
-@end
-
-
-@interface NTESFiterStatusModel : NSObject
-
-@property (nonatomic) NSInteger filterIndex;
-
-@property (nonatomic) CGFloat smoothValue;
-
-@property (nonatomic) CGFloat constrastValue;
-
-@end
-
-@interface NTESAnchorLiveViewController : UIViewController
-
-@property (nonatomic) NIMVideoOrientation orientation;
-
-@property (nonatomic ,strong ) NTESFiterStatusModel *filterModel;
+@interface NTESAnchorLiveViewController : NTESBypassLiveViewController
 
 - (instancetype)initWithChatroom:(NIMChatroom *)chatroom currentMeeting:(NIMNetCallMeeting*)currentMeeting capture:(NTESMediaCapture*)capture delegate:(id<NTESAnchorLiveViewControllerDelegate>)delegate;
 

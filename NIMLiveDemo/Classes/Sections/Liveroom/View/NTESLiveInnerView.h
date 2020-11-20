@@ -16,10 +16,12 @@
 @protocol NTESLiveInnerViewDelegate <NSObject>
 
 - (BOOL)isPlayerPlaying;
+- (BOOL)isAudioMode;
 
 @optional
 
 - (void)onCloseLiving;
+- (void)onExitRoom;
 - (void)onClosePlaying;
 - (void)onCloseBypassingWithUid:(NSString *)uid;
 - (void)onActionType:(NTESLiveActionType)type sender:(id)sender; //点击InnerView上的按钮
@@ -76,14 +78,20 @@
 
 - (void)updateConnectorCount:(NSInteger)count;
 
-- (void)updateRemoteView:(NSData *)yuvData
-                   width:(NSUInteger)width
-                  height:(NSUInteger)height
-                     uid:(NSString *)uid;
+- (void)updateExitButtonHidden:(BOOL)hidden;
+
+- (void)addRemoteView:(UIView *)view
+                  uid:(NSString *)uid;
+
+- (void)switchToAudioTypeExitView;
 
 - (void)switchToWaitingUI;
 
 - (void)switchToPlayingUI;
+
+- (void)switchToAnchorReenterView:(NTESMicConnector *)connector;
+
+- (void)switchToAudienceBigViewUI;
 
 - (void)switchToLinkingUI;
 
@@ -113,5 +121,9 @@
 - (void)addPkToastWithPkInfo:(NTESPKInfo *)info;
 
 - (void)removePkToast;
+
+- (void)updateAnchorVolume:(UInt16)volume;
+
+- (void)updateUserVolume:(UInt16)volume uid:(NSString *)uid;
 
 @end

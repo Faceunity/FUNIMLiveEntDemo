@@ -39,6 +39,7 @@
 #import "NTESAnchorPkToast.h"
 #import "NTESCustomKeyDefine.h"
 #import "NTESAlertSheetView.h"
+#import "NTESRoomBypassAttachment.h"
 
 typedef void(^NTESDisconnectAckHandler)(NSError *);
 typedef void(^NTESAgreeMicHandler)(NSError *);
@@ -67,6 +68,15 @@ NTESPresentShopViewDelegate,NTESInteractSelectDelegate,NTESAudienceConnectDelega
 @property (nonatomic, strong) NTESLiveAudienceHandler *handler;
 
 @property (nonatomic, copy) NSString *streamUrl;
+
+@property (nonatomic, assign) UInt64 anchorMeetingUid;
+
+@property (nonatomic, assign) NTESBypassType bypassType;
+
+@property (nonatomic, assign) BOOL selfBigView;
+
+@property (nonatomic, assign) BOOL anchorLeft;
+
 
 @end
 
@@ -187,6 +197,14 @@ NTES_FORBID_INTERACTIVE_POP
                 else if ([attachment isKindOfClass:[NTESMicConnectedAttachment class]] || [attachment isKindOfClass:[NTESDisConnectedAttachment class]]) {
                     [self.handler dealWithBypassMessage:message];
                 }
+                else if ([attachment isKindOfClass:[NTESRoomBypassJoinAttachment class]])
+                {
+                    self.anchorLeft = NO;
+                }
+                else if ([attachment isKindOfClass:[NTESRoomBypassleaveAttachment class]])
+                {
+                    self.anchorLeft = YES;
+                }
             }
                 break;
             case NIMMessageTypeNotification:{
@@ -241,6 +259,13 @@ NTES_FORBID_INTERACTIVE_POP
              meeting:(NIMNetCallMeeting *)meeting
 {
     DDLogInfo(@"on user joined uid %@",uid);
+    NIMChatroom *roomInfo = [[NTESLiveManager sharedInstance] roomInfo:_chatroomId];
+    //只有当前是大画面的逻辑才需要 还原为小画面
+    if ([uid isEqualToString:roomInfo.creator] && _selfBigView) {
+        _selfBigView = NO;
+        NTESMicConnector *connector = [NTESMicConnector me:_chatroomId];
+        [self.innerView switchToAnchorReenterView:connector];
+    }
 }
 
 - (void)onUserLeft:(NSString *)uid
@@ -255,10 +280,19 @@ NTES_FORBID_INTERACTIVE_POP
     
     NIMChatroom *roomInfo = [[NTESLiveManager sharedInstance] roomInfo:_chatroomId];
     if ([uid isEqualToString:roomInfo.creator]) {
-        //如果是遇到主播退出了的情况，则自己默默退出去
-        [[NTESLiveManager sharedInstance] delAllConnectorsOnMic];
-        [self.view makeToast:@"连接已断开" duration:2.0 position:CSToastPositionCenter];
-        [[NIMAVChatSDK sharedSDK].netCallManager leaveMeeting:self.handler.currentMeeting];
+        if(_bypassType == NTESBypassTypeRoom && [NTESLiveManager sharedInstance].type != NTESLiveTypeInvalid)
+        {
+            //把自己的预览搞成大画面
+            [self.innerView switchToAudienceBigViewUI];
+            _selfBigView = YES;
+            return;
+        }
+        else {
+            //如果是遇到主播退出了的情况，则自己默默退出去
+            [[NTESLiveManager sharedInstance] delAllConnectorsOnMic];
+            [self.view makeToast:@"连接已断开" duration:2.0 position:CSToastPositionCenter];
+            [[NIMAVChatSDK sharedSDK].netCallManager leaveMeeting:self.handler.currentMeeting];
+        }
     }
     
     [self.innerView refreshBypassUI];
@@ -276,28 +310,55 @@ NTES_FORBID_INTERACTIVE_POP
     [self requestPlayStream];
 }
 
-
-- (void)onRemoteYUVReady:(NSData *)yuvData
-                   width:(NSUInteger)width
-                  height:(NSUInteger)height
-                    from:(NSString *)user
-{
-    [self.innerView updateRemoteView:yuvData width:width height:height uid:user];
+- (void)onRemoteDisplayviewReady:(UIView *)displayView user:(NSString *)user {
+    [self.innerView addRemoteView:displayView uid:user];
 }
 
 - (void)onCameraTypeSwitchCompleted:(NIMNetCallCamera)cameraType
 {}
 
+- (void)onMyVolumeUpdate:(UInt16)volume {
+    NSString *myUid = [[NIMSDK sharedSDK].loginManager currentAccount];
+    [self.innerView updateUserVolume:volume uid:myUid];
+}
+
+- (void)onSpeakingUsersReport:(nullable NSArray<NIMNetCallUserInfo *> *)report {
+    NIMChatroom *chatroom = [[NTESLiveManager sharedInstance] roomInfo:_chatroomId];
+    __weak typeof(self) weakSelf = self;
+    [report enumerateObjectsUsingBlock:^(NIMNetCallUserInfo * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if ([obj.uid isEqualToString:chatroom.creator]) {
+            [weakSelf.innerView updateAnchorVolume:obj.volume];
+        } else {
+            [weakSelf.innerView updateUserVolume:obj.volume uid:obj.uid];
+        }
+    }];
+}
+
+#pragma mark - Overload Super Fuction
+- (void)didUpdateVolume:(UInt16)volume meetingUid:(UInt64)meetingUid {
+    if (meetingUid == _anchorMeetingUid) {
+        [_innerView updateAnchorVolume:volume];
+    } else {
+        NSString *uid = [[NTESLiveManager sharedInstance] connectorUidOnMicWithMeetingUid:meetingUid];
+        if (uid)
+            [_innerView updateUserVolume:volume uid:uid];
+    }
+}
 
 #pragma mark - NTESLiveAudienceHandlerDelegate
 - (void)didUpdateUserOnMicWithUid:(NSString *)uid
 {
     NSLog(@"%@ - %@", uid, [[NIMSDK sharedSDK].loginManager currentAccount]);
     
-    if (self.player.playbackState != NELPMoviePlaybackStatePlaying) {
+    if (![self isPlayerPlaying]) {
         //即普通连麦观众,并且是正在推拉流的状态,则整个UI更新一把
         NTESMicConnector *connector = [[NTESLiveManager sharedInstance] connectorOnMicWithUid:uid];
         [self.innerView refreshBypassUIWithConnector:connector];
+    } else {
+        if ([self isAudioMode]){
+            NTESMicConnector *connector = [[NTESLiveManager sharedInstance] connectorOnMicWithUid:uid];
+            [self.innerView refreshBypassUIWithConnector:connector];
+        }
     }
     [self.innerView updateUserOnMic];
 }
@@ -349,6 +410,12 @@ NTES_FORBID_INTERACTIVE_POP
     DDLogInfo(@"on receive anchor update live type notification: %zd",type);
     [NTESLiveManager sharedInstance].type = type;
     if (type == NTESLiveTypeInvalid) {
+        
+        //这个时候要自己退出音视频
+        if (_bypassType == NTESBypassTypeRoom) {
+            [[NIMAVChatSDK sharedSDK].netCallManager leaveMeeting:self.handler.currentMeeting];
+        }
+        
         //PK状态重置
         self.isAnchorPKing = NO;
         self.isStreamSwitching = NO;
@@ -359,6 +426,8 @@ NTES_FORBID_INTERACTIVE_POP
         [self shutdown:nil];
         [[NSNotificationCenter defaultCenter] postNotificationName:NTESLivePlayerPlaybackFinishedNotification object:nil userInfo:@{NELivePlayerPlaybackDidFinishReasonUserInfoKey:@(NELPMovieFinishReasonPlaybackEnded)}];
     }
+    
+    
 }
 
 -(void)didUpdateLiveOrientation:(NIMVideoOrientation)orientation
@@ -383,6 +452,11 @@ NTES_FORBID_INTERACTIVE_POP
         }];
 
     }
+}
+
+- (void)didUpdateLiveBypassType:(NTESBypassType)bypassType
+{
+    _bypassType = bypassType;
 }
 
 - (void)didUpdateChatroomMemebers:(BOOL)isAdd userId:(NSString *)userId {
@@ -505,9 +579,11 @@ NTES_FORBID_INTERACTIVE_POP
             if (!extDic) {
                 return;
             }
-            NTESPKInfo *pkInfo = [[NTESPKInfo alloc] init];
+            _anchorMeetingUid = [[extDic objectForKey:NTESCMConnectMicMeetingUid] longLongValue];
+            
             BOOL ispking = [[extDic objectForKey:NTESCMPKState] boolValue];
             if (ispking) {
+                NTESPKInfo *pkInfo = [[NTESPKInfo alloc] init];
                 pkInfo.inviter = [extDic objectForKey:NTESCMPKStartedInviter];
                 pkInfo.invitee = [extDic objectForKey:NTESCMPKStartedInvitee];
                 if (pkInfo.inviter && pkInfo.invitee) {
@@ -615,6 +691,10 @@ NTES_FORBID_INTERACTIVE_POP
     return (self.player.playbackState == NELPMoviePlaybackStatePlaying);
 }
 
+- (BOOL)isAudioMode {
+    return ([NTESLiveManager sharedInstance].type == NIMNetCallMediaTypeAudio);
+}
+
 - (void)didSendText:(NSString *)text
 {
     NIMMessage *message = [NTESSessionMsgConverter msgWithText:text];
@@ -663,7 +743,8 @@ NTES_FORBID_INTERACTIVE_POP
                 {
                     NTESInteractSelectView *interact = [[NTESInteractSelectView alloc] initWithFrame:self.view.bounds];
                     interact.delegate = self;
-                    if ([NTESLiveManager sharedInstance].type == NIMNetCallMediaTypeVideo) {
+                    NTESLiveType type = [NTESLiveManager sharedInstance].type;
+                    if (type == NIMNetCallMediaTypeVideo) {
                         interact.types = @[@(NIMNetCallMediaTypeVideo),@(NIMNetCallMediaTypeAudio)];
                     }else{
                         interact.types = @[@(NIMNetCallMediaTypeAudio)];
@@ -721,11 +802,11 @@ NTES_FORBID_INTERACTIVE_POP
     [[NIMAVChatSDK sharedSDK].netCallManager leaveMeeting:self.handler.currentMeeting];
     [SVProgressHUD showWithStatus:@"关闭中" maskType:SVProgressHUDMaskTypeClear];
     __weak typeof(self) weakSelf = self;
+    //不需要等释放回调 直接退出就行
     [self shutdown:^{
-        [SVProgressHUD dismiss];
-        [weakSelf dismissViewControllerAnimated:YES completion:nil];
     }];
-    
+    [SVProgressHUD dismiss];
+    [weakSelf dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)onCloseBypassingWithUid:(NSString *)uid
@@ -735,13 +816,25 @@ NTES_FORBID_INTERACTIVE_POP
         [self.view makeToast:@"当前无网络,请稍后重试" duration:2.0 position:CSToastPositionCenter];
         return;
     }
+    
+    NTESMicConnector *connectorOnMic = [[NTESLiveManager sharedInstance] connectorOnMicWithUid:uid];
+
     [[NTESLiveManager sharedInstance] delConnectorOnMicWithUid:uid];
     
     if ([uid isEqualToString:[NIMSDK sharedSDK].loginManager.currentAccount]) {
         [self.innerView switchToWaitingUI];
         [self requestPlayStream];
         [[NIMAVChatSDK sharedSDK].netCallManager leaveMeeting:self.handler.currentMeeting];
+        //发送全局连麦更新通知
+        [self sendDisconnectedNotify:connectorOnMic];
     }
+}
+
+- (void)sendDisconnectedNotify:(NTESMicConnector *)connector
+{
+    NIMMessage *message = [NTESSessionMsgConverter msgWithDisconnectedMic:connector];
+    NIMSession *session = [NIMSession session:_chatroomId type:NIMSessionTypeChatroom];
+    [[NIMSDK sharedSDK].chatManager sendMessage:message toSession:session error:nil];
 }
 
 #pragma mark - NTESInteractSelectDelegate
@@ -751,6 +844,10 @@ NTES_FORBID_INTERACTIVE_POP
     if (_isAnchorPKing) {
         [NTESAlertSheetView showMessageWithTitle:@"互动提醒" message:@"主播正在PK，请PK结束后发起互动申请"];
         return;
+    }
+    
+    if (_anchorLeft) {
+        [NTESAlertSheetView showMessageWithTitle:@"互动提醒" message:@"主播不在房间内，暂时不能发起连麦"];
     }
     
     [NTESUserUtil requestMediaCapturerAccess:type handler:^(NSError *error){
@@ -853,12 +950,13 @@ NTES_FORBID_INTERACTIVE_POP
     DDLogInfo(@"player %@ did play",self.player);
     [self.innerView switchToPlayingUI];
 
-    for (UIView * view in self.canvas.subviews) {
-        if ([view isKindOfClass:NSClassFromString(@"IJKSDLGLView")]) {
-            view.contentMode = UIViewContentModeScaleAspectFill;
-            break;
-        }
-    }
+    //就是要显示完整画面，有黑边不管
+//    for (UIView * view in self.canvas.subviews) {
+//        if ([view isKindOfClass:NSClassFromString(@"IJKSDLGLView")]) {
+//            view.contentMode = UIViewContentModeScaleAspectFill;
+//            break;
+//        }
+//    }
     self.isPlaying = YES;
     self.isStreamSwitching = NO;
 }

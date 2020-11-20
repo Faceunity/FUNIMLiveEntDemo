@@ -20,6 +20,12 @@ typedef NS_ENUM(NSInteger, NTESLiveType){
     NTESLiveTypeVideo = NIMNetCallMediaTypeVideo,    //视频直播
 };
 
+typedef NS_ENUM(NSInteger, NTESBypassType){
+    NTESBypassTypeRoom,
+    NTESBypassTypeAnchor,
+};
+
+
 
 typedef NS_ENUM(NSInteger, NTESLiveActionType)
 {
@@ -69,7 +75,7 @@ typedef NS_ENUM(NSInteger, NTESLiveCustomNotificationType)
     NTESLiveCustomNotificationTypeForceDisconnect  = 4,  //主播强制让连麦者断开
     NTESLiveCustomNotificationTypeRejectAgree      = 5,  //拒绝主播的同意连麦
     
-    NTESLiveCustomNotificationTypePkOnlineRequest = 6, //请求在线状态
+    NTESLiveCustomNotificationTypePkOnlineRequest = 6, //主播推流请求在线状态
     NTESLiveCustomNotificationTypePkOnlineResponse = 7, //在线响应
     NTESLiveCustomNotificationTypePkRequest = 8, //PK请求
     NTESLiveCustomNotificationTypePkCancel = 9, //PK取消
@@ -78,6 +84,8 @@ typedef NS_ENUM(NSInteger, NTESLiveCustomNotificationType)
     NTESLiveCustomNotificationTypePkInvalid = 12,//无效用户
     NTESLiveCustomNotificationTypePkBusy = 13,//正在PK
     NTESLiveCustomNotificationTypePkDidExit = 14,//用户已经退出音视频房间
+    NTESLiveCustomNotificationTypePkRoomByapssOnlineRequest = 15,//房间推流请求在线状态
+
 };
 
 typedef NS_ENUM(NSUInteger, NTESFilterType) {
@@ -119,7 +127,7 @@ typedef NS_ENUM(NSInteger, NTESRemoteErrorCode) {
 
 typedef NS_ENUM(NSInteger,NTESAnchorPKStatus)
 {
-    NTESAnchorPKStatusIdle,   //空闲状态
+    NTESAnchorPKStatusIdle = 0,   //空闲状态
     NTESAnchorPKStatusPingInteractive, //Ping阶段
     NTESAnchorPKStatusPkInteractive,   //pk请求阶段
     NTESAnchorPKStatusComplete,        //完成阶段

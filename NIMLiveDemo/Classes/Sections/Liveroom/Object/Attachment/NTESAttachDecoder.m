@@ -13,6 +13,7 @@
 #import "NTESLikeAttachment.h"
 #import "NTESMicAttachment.h"
 #import "NTESPKAttachment.h"
+#import "NTESRoomBypassAttachment.h"
 
 @implementation NTESAttachDecoder
 
@@ -49,6 +50,7 @@
                     ((NTESMicConnectedAttachment *)attachment).type = [data jsonInteger:NTESCMCallStyle];
                     ((NTESMicConnectedAttachment *)attachment).nick = [data jsonString:NTESCMConnectMicNick];
                     ((NTESMicConnectedAttachment *)attachment).avatar = [data jsonString:NTESCMConnectMicAvatar];
+                    ((NTESMicConnectedAttachment *)attachment).meetingUid = [data jsonString:NTESCMConnectMicMeetingUid].longLongValue;
                 }
                     break;
                 case NTESCustomAttachTypeDisconnectedMic:
@@ -71,6 +73,17 @@
                     attachment = [[NTESPKExitedAttachment alloc] init];
                 }
                     break;
+                case NTESCustomAttachTypeAnchorJoined:
+                {
+                    attachment = [[NTESRoomBypassJoinAttachment alloc] init];
+                }
+                    break;
+                case NTESCustomAttachTypeAnchorLeft:
+                {
+                    attachment = [[NTESRoomBypassleaveAttachment alloc] init];
+                }
+                    break;
+
                     
                 default:
                     break;

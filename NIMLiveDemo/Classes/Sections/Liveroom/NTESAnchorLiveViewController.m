@@ -46,12 +46,13 @@
 #import "NTESAnchorPKView.h"
 
 /* faceU */
-#import <FUAPIDemoBar/FUAPIDemoBar.h>
+#import "FUAPIDemoBar.h"
 #import "FUManager.h"
 
-@implementation NTESFiterStatusModel
+#import "FUTestRecorder.h"
 
-@end
+
+#import "NTESFiterStatusModel.h"
 
 typedef void(^NTESDisconnectAckHandler)(NSError *);
 typedef void(^NTESAgreeMicHandler)(NSError *);
@@ -113,6 +114,7 @@ NIMChatManagerDelegate,NIMSystemNotificationManagerDelegate,NIMNetCallManagerDel
 
 @property (nonatomic, strong) NSString *roomName;
 
+/**faceU */
 @property(nonatomic,strong)FUAPIDemoBar *demoBar;
 
 @end
@@ -153,10 +155,13 @@ NTES_FORBID_INTERACTIVE_POP
 }
 
 - (void)dealloc{
+    
+    [[FUManager shareManager] destoryItems];
     [[NIMSDK sharedSDK].chatroomManager removeDelegate:self];
     [[NIMSDK sharedSDK].chatManager removeDelegate:self];
     [UIApplication sharedApplication].idleTimerDisabled = NO;
     [[NTESLiveManager sharedInstance] stop];
+    
 }
 
 - (void)viewDidLoad {
@@ -166,8 +171,13 @@ NTES_FORBID_INTERACTIVE_POP
 
     [self setUp];
     
+    [[FUTestRecorder shareRecorder] setupRecord];
+    
     /* faceU */
-    [[FUManager shareManager] loadItems];
+    [[FUManager shareManager] loadFilter];
+    [FUManager shareManager].isRender = YES;
+    [FUManager shareManager].flipx = NO;
+    [FUManager shareManager].trackFlipx = NO;
     [self.innerView addSubview:self.demoBar];
     
     
@@ -175,6 +185,8 @@ NTES_FORBID_INTERACTIVE_POP
               (int)[NTESLiveManager sharedInstance].type,[[NIMSDK sharedSDK].loginManager currentAccount]);
     //视频直播
     if (_isVideoLiving) {
+        
+        self.demoBar.hidden = NO;
         [NTESLiveManager sharedInstance].type = NTESLiveTypeVideo;
         [_capture switchContainerToView:self.captureView];
         [self.innerView switchToPlayingUI];
@@ -185,6 +197,8 @@ NTES_FORBID_INTERACTIVE_POP
     //语音直播
     else
     {
+        
+        self.demoBar.hidden = YES;
         [self.innerView switchToWaitingUI];
         [self.view addSubview:self.innerView];
         __weak typeof(self) wself = self;
@@ -301,9 +315,14 @@ NTES_FORBID_INTERACTIVE_POP
              meeting:(NIMNetCallMeeting *)meeting
 {
     DDLogInfo(@"on user joined uid %@",uid);
+    if (_isAnchorPking) {
+        [NSObject cancelPreviousPerformRequestsWithTarget:self];
+    }
+    
     NTESMicConnector *connector = [[NTESLiveManager sharedInstance] findConnector:uid];
     if (connector) {
         connector.state = NTESLiveMicStateConnected;
+        connector.meetingUid = [[NIMAVChatSDK sharedSDK].netCallManager getMeetingIdWithUserUid:uid];
         [[NTESLiveManager sharedInstance] addConnectorOnMic:connector];
         
         //将连麦者的GLView扔到右下角，并显示名字
@@ -319,7 +338,8 @@ NTES_FORBID_INTERACTIVE_POP
                       @"state":@(NTESLiveMicStateConnected),
                       @"info":@{
                               @"nick" : connector.nick.length? connector.nick : connector.uid,
-                              @"avatar":connector.avatar.length? connector.avatar : @"avatar_default"}} jsonBody];
+                              @"avatar":connector.avatar.length? connector.avatar : @"avatar_default",
+                              @"meetingUid":@(connector.meetingUid)}} jsonBody];
         data.uid = uid;
         [[NTESDemoService sharedService] requestMicQueuePush:data completion:nil];
     }
@@ -328,7 +348,7 @@ NTES_FORBID_INTERACTIVE_POP
 - (void)onUserLeft:(NSString *)uid
            meeting:(NIMNetCallMeeting *)meeting
 {
-    DDLogInfo(@"on user left %@",uid);
+    DDLogInfo(@"on user left %@, pk uid %@",uid, [NTESLiveManager sharedInstance].dstPkAnchor.uid);
 
     //判断是不是主播PK
     if (_isAnchorPking && [uid isEqualToString:[NTESLiveManager sharedInstance].dstPkAnchor.uid]) {
@@ -399,6 +419,13 @@ NTES_FORBID_INTERACTIVE_POP
     [self dismissViewControllerAnimated:YES completion:nil];
 }
 
+- (void)onRemoteDisplayviewReady:(UIView *)displayView user:(NSString *)user {
+    BOOL isOnMic = [NTESLiveManager sharedInstance].connectorsOnMic.count;
+    if (isOnMic) {
+        [self.innerView addRemoteView:displayView uid:user];
+    }
+}
+
 - (void)onRemoteYUVReady:(NSData *)yuvData
                    width:(NSUInteger)width
                   height:(NSUInteger)height
@@ -406,20 +433,18 @@ NTES_FORBID_INTERACTIVE_POP
 {
     BOOL isOnMic = [NTESLiveManager sharedInstance].connectorsOnMic.count;
     BOOL isPk = ([NTESLiveManager sharedInstance].pkStatus == NTESAnchorPKStatusComplete);
-    if (isOnMic) {
-        [self.innerView updateRemoteView:yuvData width:width height:height uid:user];
-    } else if (isPk) {
+    if (!isOnMic && isPk) {
         [self.innerView updateAnchorPkRemoteView:yuvData width:width height:height uid:user];
     }
 }
 
 -(void)onCameraTypeSwitchCompleted:(NIMNetCallCamera)cameraType
 {
+    [FUManager shareManager].trackFlipx = ![FUManager shareManager].trackFlipx;
     if (cameraType == NIMNetCallCameraBack) {
         // 镜像关闭
         [self.mirrorView setMirrorDisabled];
         [self.innerView updateMirrorButton:NO];
-        [FUManager shareManager].flipx = YES;
     }
     else
     {
@@ -453,6 +478,16 @@ NTES_FORBID_INTERACTIVE_POP
     }
 }
 
+- (void)onMyVolumeUpdate:(UInt16)volume {
+    [self.innerView updateAnchorVolume:volume];
+}
+
+- (void)onSpeakingUsersReport:(nullable NSArray<NIMNetCallUserInfo *> *)report {
+    __weak typeof(self) weakSelf = self;
+    [report enumerateObjectsUsingBlock:^(NIMNetCallUserInfo * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        [weakSelf.innerView updateUserVolume:obj.volume uid:obj.uid];
+    }];
+}
 
 #pragma mark - NTESLiveAnchorHandlerDelegate
 - (void)didUpdateConnectors
@@ -511,6 +546,10 @@ NTES_FORBID_INTERACTIVE_POP
     return NO;
 }
 
+- (BOOL)isAudioMode {
+    return ([NTESLiveManager sharedInstance].type == NTESLiveTypeAudio);
+}
+
 - (void)didSendText:(NSString *)text
 {
     NIMMessage *message = [NTESSessionMsgConverter msgWithText:text];
@@ -531,6 +570,9 @@ NTES_FORBID_INTERACTIVE_POP
                         DDLogError(@"start error:%@",error);
                     }else
                     {
+                        NSString *uid = [NIMSDK sharedSDK].loginManager.currentAccount;
+                        UInt64 meetingUid = [[NIMAVChatSDK sharedSDK].netCallManager getMeetingIdWithUserUid:uid];
+                        [weakSelf doUpdateChatroomExtWithMeetingUid:meetingUid];
                         //将服务器连麦请求队列清空
                         [[NIMSDK sharedSDK].chatroomManager dropChatroomQueue:weakSelf.chatroom.roomId completion:nil];
                         //发一个全局断开连麦的通知给观众，表示之前的连麦都无效了
@@ -550,6 +592,7 @@ NTES_FORBID_INTERACTIVE_POP
         }
         case NTESLiveActionTypeCamera:
             [self.capture switchCamera];
+            [FUManager shareManager].flipx = ![FUManager shareManager].flipx;
             break;
 
         case NTESLiveActionTypeInteract:{
@@ -792,11 +835,11 @@ NTES_FORBID_INTERACTIVE_POP
                           NTESCMType  : @([NTESLiveManager sharedInstance].type),
                           NTESCMMeetingName: @""
                           } jsonBody];
+    NSString *ext = [NTESLiveUtil jsonString:self.chatroom.ext addJsonString:update];
     request.roomId = self.chatroom.roomId;
-    request.updateInfo = @{@(NIMChatroomUpdateTagExt) : update};
+    request.updateInfo = @{@(NIMChatroomUpdateTagExt) : ext};
     request.needNotify = YES;
     request.notifyExt  = update;
-    
     [[NIMSDK sharedSDK].chatroomManager updateChatroomInfo:request completion:nil];
     [[NIMSDK sharedSDK].chatroomManager exitChatroom:self.chatroom.roomId completion:nil];
     
@@ -804,10 +847,10 @@ NTES_FORBID_INTERACTIVE_POP
         [self doSendPkCancelToUser:[NTESLiveManager sharedInstance].dstPkAnchor.uid];
     }
     if (_isAnchorPking) {
-        [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusComplete;
         [[NIMAVChatSDK sharedSDK].netCallManager leaveMeeting:self.pkMeeting];
     }
     
+    [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
     [[NIMAVChatSDK sharedSDK].netCallManager leaveMeeting:self.currentMeeting];
     [[NTESLiveManager sharedInstance] removeAllConnectors];
     
@@ -1301,6 +1344,7 @@ NTES_FORBID_INTERACTIVE_POP
 }
 
 #pragma mark - Get
+
 - (UIView *)captureView
 {
     if (!_captureView) {
@@ -1419,6 +1463,8 @@ NTES_FORBID_INTERACTIVE_POP
 
 - (void)doReserveAndJoinWithAnchorNewPkMeeting
 {
+    _isAnchorPking = YES;
+    DDLogInfo(@"doReserveAndJoinWithAnchorNewPkMeeting");
     NTESMicConnector *connector = [NTESLiveManager sharedInstance].dstPkAnchor;
 
     NSString *dstUserUid = connector.uid;
@@ -1442,6 +1488,7 @@ NTES_FORBID_INTERACTIVE_POP
     __weak typeof(self) weakSelf = self;
     [[NIMAVChatSDK sharedSDK].netCallManager reserveMeeting:newMeeting completion:^(NIMNetCallMeeting * _Nonnull meeting, NSError * _Nullable error) {
         if (error) {
+            weakSelf.isAnchorPking = NO;
             weakSelf.isSwitchNewMeeting = NO;
             DDLogError(@"reserveMeeting error: %@",error);
             NSString *msg = [NSString stringWithFormat:@"reserveMeeting error:[%d]", (int)error.code];
@@ -1453,16 +1500,20 @@ NTES_FORBID_INTERACTIVE_POP
             [[NIMAVChatSDK sharedSDK].netCallManager joinMeeting:newMeeting
                                                       completion:^(NIMNetCallMeeting * _Nonnull meeting, NSError * _Nullable error) {
                                                           if (error) {
+                                                              weakSelf.isAnchorPking = NO;
+                                                              DDLogError(@"joinMeeting error:[%d]", (int)error.code);
                                                               NSString *msg = [NSString stringWithFormat:@"joinMeeting error:[%d]",
                                                                                (int)error.code];
                                                               [weakSelf.view makeToast:msg duration:2.0 position:CSToastPositionCenter];
                                                               [weakSelf doSendPkRejectToUser:dstUserUid]; //拒绝吧
                                                           } else {
+                                                              weakSelf.isAnchorPking = YES;
                                                               NTESMicConnector *dstUser = [NTESLiveManager sharedInstance].dstPkAnchor;
                                                               [weakSelf.innerView switchToPkUIWithNick:dstUser.nick uid:dstUser.uid];
-                                                              [weakSelf doSendPkAgreeToUser:dstUserUid]; //同意了
-                                                              weakSelf.isAnchorPking = YES;
                                                               [weakSelf doSendPkInfoToAudienceWithPkState:YES];
+                                                              [weakSelf doSendPkAgreeToUser:dstUserUid]; //同意了
+                                                              //等10s
+                                                              [weakSelf performSelector:@selector(doWaitEnterMeetingTimeout) withObject:nil afterDelay:10];
                                                           }
                                                           weakSelf.isSwitchNewMeeting = NO;
                                                       }];
@@ -1472,6 +1523,7 @@ NTES_FORBID_INTERACTIVE_POP
 
 - (void)doJoinWithAnchorNewPkMeeting
 {
+    DDLogInfo(@"doJoinWithAnchorNewPkMeeting");
     NTESMicConnector *dstAnchor = [NTESLiveManager sharedInstance].dstPkAnchor;
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
     
@@ -1497,6 +1549,7 @@ NTES_FORBID_INTERACTIVE_POP
     [[NIMAVChatSDK sharedSDK].netCallManager joinMeeting:newMeeting completion:^(NIMNetCallMeeting * _Nonnull meeting, NSError * _Nullable error) {
         weakSelf.isSwitchNewMeeting = NO;
         if (error) {
+            DDLogError(@"joinMeeting error:[%d]", (int)error.code);
             NSString *msg = [NSString stringWithFormat:@"joinMeeting error:[%d]",
                              (int)error.code];
             [weakSelf.view makeToast:msg duration:2.0 position:CSToastPositionCenter];
@@ -1505,9 +1558,7 @@ NTES_FORBID_INTERACTIVE_POP
         } else {
             NTESMicConnector *dstUser = [NTESLiveManager sharedInstance].dstPkAnchor;
             [weakSelf.innerView switchToPkUIWithNick:dstUser.nick uid:dstUser.uid];
-            
             weakSelf.isAnchorPking = YES;
-            
             NTESPKInfo *pkInfo = [[NTESPKInfo alloc] init];
             pkInfo.isPking = YES;
             pkInfo.inviter = member.roomNickname;
@@ -1521,6 +1572,7 @@ NTES_FORBID_INTERACTIVE_POP
 - (void)doJoinWithAnchorOriginMeeting
 {
     //重新加入原来的meeting
+    DDLogInfo(@"doJoinWithAnchorOriginMeeting");
     if (_currentMeeting.type == NIMNetCallMediaTypeVideo) {
         //开启摄像头
         NIMNetCallVideoCaptureParam *param = [NTESUserUtil videoCaptureParam];
@@ -1531,6 +1583,7 @@ NTES_FORBID_INTERACTIVE_POP
     }
     __weak typeof(self) weakSelf = self;
     [[NIMAVChatSDK sharedSDK].netCallManager reserveMeeting:_currentMeeting completion:^(NIMNetCallMeeting * _Nonnull meeting, NSError * _Nullable error) {
+        weakSelf.isSwitchOriginMeeting = NO;
         if (error) {
             DDLogError(@"reserveMeeting error: %@",error);
             NSString *msg = [NSString stringWithFormat:@"reserveMeeting error:[%d]", (int)error.code];
@@ -1595,15 +1648,35 @@ NTES_FORBID_INTERACTIVE_POP
                   NTESCMPKStartedInvitee  : info.invitee ? : @"",
                   NTESCMMeetingName : _currentMeeting.name ? : @"",
                   } jsonBody];
+    
+    NSString *ext = [NTESLiveUtil jsonString:self.chatroom.ext addJsonString:update];
     request.roomId = self.chatroom.roomId;
-    request.updateInfo = @{@(NIMChatroomUpdateTagExt) : update };
+    request.updateInfo = @{@(NIMChatroomUpdateTagExt) : ext};
     request.needNotify = YES;
     request.notifyExt  = update;
     [[NIMSDK sharedSDK].chatroomManager updateChatroomInfo:request completion:nil];
 }
 
+- (void)doUpdateChatroomExtWithMeetingUid:(UInt64)anchorMeetingUid {
+    NIMChatroomUpdateRequest *request = [[NIMChatroomUpdateRequest alloc] init];
+    NSString *update = nil;
+    update = [@{
+                NTESCMConnectMicMeetingUid : @(anchorMeetingUid)
+                } jsonBody];
+    NSString *ext = [NTESLiveUtil jsonString:self.chatroom.ext addJsonString:update];
+    request.roomId = self.chatroom.roomId;
+    request.updateInfo = @{@(NIMChatroomUpdateTagExt) : ext};
+    request.needNotify = YES;
+    request.notifyExt  = update;
+    [[NIMSDK sharedSDK].chatroomManager updateChatroomInfo:request completion:nil];
+}
+
+
 #pragma mark - 多主播PK - 发
 - (void)doWaitOnlineResponseTimeout {
+    if ([NTESLiveManager sharedInstance].pkStatus != NTESAnchorPKStatusPingInteractive) {
+        return;
+    }
     [_pkAlert dismissWithCompletion:^{
         [NTESAlertSheetView showMessageWithTitle:@"PK提醒"
                                          message:@"邀请PK主播此刻不在线，请稍后邀请"];
@@ -1613,6 +1686,9 @@ NTES_FORBID_INTERACTIVE_POP
 }
 
 - (void)doWaitRequestResponseTimeout {
+    if ([NTESLiveManager sharedInstance].pkStatus != NTESAnchorPKStatusPkInteractive) {
+        return;
+    }
     NSString *dstNick = [NTESLiveManager sharedInstance].dstPkAnchor.nick;
     NSString *msg = [NSString stringWithFormat:@"很遗憾，%@没有回应PK邀请，试试邀请其他主播吧", dstNick];
     [_pkAlert dismissWithCompletion:^{
@@ -1623,6 +1699,15 @@ NTES_FORBID_INTERACTIVE_POP
     [NTESLiveManager sharedInstance].dstPkAnchor = nil;
 }
 
+- (void)doWaitEnterMeetingTimeout {
+    if ([NTESLiveManager sharedInstance].pkStatus != NTESAnchorPKStatusPkInteractive) {
+        return;
+    }
+    [self.view makeToast:@"Pk失败，对方加入会议超时" duration:2.0 position:CSToastPositionCenter];
+    [self didReceivePkExit];
+    [self doSendPkCancelToUser:[NTESLiveManager sharedInstance].dstPkAnchor.uid];
+}
+
 //发送在线响应
 - (void)doSendOnlineRequestToUser:(NSString *)dstUserId roomId:(NSString *)roomId {
     NIMSession *session = [NIMSession session:dstUserId type:NIMSessionTypeP2P];
@@ -1630,11 +1715,11 @@ NTES_FORBID_INTERACTIVE_POP
     
     __weak typeof(self) weakSelf = self;
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-    DDLogInfo(@"[zgn] 发送 PkOnlineRequest：[%@] -> [%@]", member.userId, dstUserId);
+    DDLogInfo(@"YAT 发送 PkOnlineRequest：[%@] -> [%@]", member.userId, dstUserId);
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusPingInteractive;
     [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notification toSession:session completion:^(NSError * _Nullable error){
         if (error) {
-            DDLogError(@"notification with agree mic error: %@",error);
+            DDLogError(@"YAT notification with agree mic error: %@",error);
             [weakSelf.view makeToast:@"发送OnlineRequest失败" duration:2.0 position:CSToastPositionCenter];
             [weakSelf.pkAlert dismissWithCompletion:nil];
             [NTESLiveManager sharedInstance].dstPkAnchor = nil;
@@ -1655,10 +1740,10 @@ NTES_FORBID_INTERACTIVE_POP
     __weak typeof(self) weakSelf = self;
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusPingInteractive;
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-    DDLogInfo(@"[zgn] 发送 PkOnlineResponse：[%@] -> [%@]", member.userId, dstUserId);
+    DDLogInfo(@"YAT 发送 PkOnlineResponse：[%@] -> [%@]", member.userId, dstUserId);
     [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notification toSession:session completion:^(NSError * _Nullable error){
         if (error) {
-            DDLogError(@"notification with agree mic error: %@",error);
+            DDLogError(@"YAT notification with agree mic error: %@",error);
             [weakSelf.view makeToast:@"发送OnlineResponse失败" duration:2.0 position:CSToastPositionCenter];
             [NTESLiveManager sharedInstance].dstPkAnchor = nil;
             [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
@@ -1669,15 +1754,15 @@ NTES_FORBID_INTERACTIVE_POP
 //发送PK请求
 - (void)doSendPkRequestToUser:(NSString *)dstUserId {
     NIMSession *session = [NIMSession session:dstUserId type:NIMSessionTypeP2P];
-    NIMCustomSystemNotification *notification = [NTESSessionCustomNotificationConverter notificationWithPkRequest:_chatroom.roomId];
+    NIMCustomSystemNotification *notification = [NTESSessionCustomNotificationConverter notificationWithPkRequest:_chatroom.roomId pushUrl:nil layoutParam:nil];
     
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusPkInteractive;
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-    DDLogInfo(@"[zgn] 发送 PkRequest：[%@] -> [%@]", member.userId, dstUserId);
+    DDLogInfo(@"YAT 发送 PkRequest：[%@] -> [%@]", member.userId, dstUserId);
     __weak typeof(self) weakSelf = self;
     [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notification toSession:session completion:^(NSError * _Nullable error){
         if (error) {
-            DDLogError(@"notification with agree mic error: %@",error);
+            DDLogError(@"YAT notification with agree mic error: %@",error);
             [weakSelf.view makeToast:@"发送PkRequest响应失败" duration:2.0 position:CSToastPositionCenter];
             [NTESLiveManager sharedInstance].dstPkAnchor = nil;
             [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
@@ -1686,21 +1771,18 @@ NTES_FORBID_INTERACTIVE_POP
 }
 
 - (void)doSendPkCancelToUser:(NSString *)dstUserId {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self
-                                             selector:@selector(doWaitOnlineResponseTimeout)
-                                               object:nil]; //取消在线响应等待
-    
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
     NIMSession *session = [NIMSession session:dstUserId type:NIMSessionTypeP2P];
     NIMCustomSystemNotification *notification = [NTESSessionCustomNotificationConverter notificationWithPkCancel:_chatroom.roomId];
     [NTESLiveManager sharedInstance].dstPkAnchor = nil;
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
     
-    DDLogInfo(@"[zgn] 发送 PkCancel：[%@] -> [%@]", member.userId, dstUserId);
+    DDLogInfo(@"YAT 发送 PkCancel：[%@] -> [%@]", member.userId, dstUserId);
     __weak typeof(self) weakSelf = self;
     [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notification toSession:session completion:^(NSError * _Nullable error){
         if (error) {
-            DDLogError(@"notification with cancel error: %@",error);
+            DDLogError(@"YAT notification with cancel error: %@",error);
             [weakSelf.view makeToast:@"发送PkCancel失败" duration:2.0 position:CSToastPositionCenter];
         }
     }];
@@ -1713,11 +1795,11 @@ NTES_FORBID_INTERACTIVE_POP
     [NTESLiveManager sharedInstance].dstPkAnchor = nil;
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-    DDLogInfo(@"[zgn] 发送 PkInvalid：[%@] -> [%@]", member.userId, dstUserId);
+    DDLogInfo(@"YAT 发送 PkInvalid：[%@] -> [%@]", member.userId, dstUserId);
     __weak typeof(self) weakSelf = self;
     [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notification toSession:session completion:^(NSError * _Nullable error){
         if (error) {
-            DDLogError(@"notification with agree mic error: %@",error);
+            DDLogError(@"YAT notification with agree mic error: %@",error);
             [weakSelf.view makeToast:@"发送PkInvalid失败" duration:2.0 position:CSToastPositionCenter];
         }
     }];
@@ -1728,11 +1810,11 @@ NTES_FORBID_INTERACTIVE_POP
     NIMSession *session = [NIMSession session:dstUserId type:NIMSessionTypeP2P];
     NIMCustomSystemNotification *notification = [NTESSessionCustomNotificationConverter notificationWithPkBusy:_chatroom.roomId];
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-    DDLogInfo(@"[zgn] 发送 PkBusy：[%@] -> [%@]", member.userId, dstUserId);
+    DDLogInfo(@"YAT 发送 PkBusy：[%@] -> [%@]", member.userId, dstUserId);
     __weak typeof(self) weakSelf = self;
     [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notification toSession:session completion:^(NSError * _Nullable error){
         if (error) {
-            DDLogError(@"notification with agree mic error: %@",error);
+            DDLogError(@"YAT notification with agree mic error: %@",error);
             [weakSelf.view makeToast:@"发送PkBusy失败" duration:2.0 position:CSToastPositionCenter];
         }
     }];
@@ -1745,11 +1827,11 @@ NTES_FORBID_INTERACTIVE_POP
     [NTESLiveManager sharedInstance].dstPkAnchor = nil;
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
-    DDLogInfo(@"[zgn] 发送 PkReject：[%@] -> [%@]", member.userId, dstUserId);
+    DDLogInfo(@"YAT 发送 PkReject：[%@] -> [%@]", member.userId, dstUserId);
     __weak typeof(self) weakSelf = self;
     [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notification toSession:session completion:^(NSError * _Nullable error){
         if (error) {
-            DDLogError(@"notification with agree mic error: %@",error);
+            DDLogError(@"YAT notification with agree mic error: %@",error);
             [weakSelf.view makeToast:@"发送PkReject失败" duration:2.0 position:CSToastPositionCenter];
         }
     }];
@@ -1761,11 +1843,11 @@ NTES_FORBID_INTERACTIVE_POP
     NIMCustomSystemNotification *notification = [NTESSessionCustomNotificationConverter notificationWithPkAgreeWithRoomName:_pkMeeting.name roomId:_chatroom.roomId];
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:_chatroom.roomId];
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusComplete;
-    DDLogInfo(@"[zgn] 发送 PkAgree：[%@] -> [%@]", member.userId, dstUserId);
+    DDLogInfo(@"YAT 发送 PkAgree：[%@] -> [%@]", member.userId, dstUserId);
     __weak typeof(self) weakSelf = self;
     [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notification toSession:session completion:^(NSError * _Nullable error){
         if (error) {
-            DDLogError(@"notification with agree mic error: %@",error);
+            DDLogError(@"YAT notification with agree mic error: %@",error);
             [weakSelf.view makeToast:@"发送在线响应失败" duration:2.0 position:CSToastPositionCenter];
             [NTESLiveManager sharedInstance].dstPkAnchor = nil;
             [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
@@ -1776,21 +1858,21 @@ NTES_FORBID_INTERACTIVE_POP
 - (void)doSendPkExitToUser:(NSString *)dstUserId {
     NIMSession *session = [NIMSession session:dstUserId type:NIMSessionTypeP2P];
     NIMCustomSystemNotification *notification = [NTESSessionCustomNotificationConverter notificationWithPkDidExit:_chatroom.roomId];
-    [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusComplete;
+    [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
 
     __weak typeof(self) weakSelf = self;
     [[NIMSDK sharedSDK].systemNotificationManager sendCustomNotification:notification toSession:session completion:^(NSError * _Nullable error){
         if (error) {
-            DDLogError(@"notification with agree mic error: %@",error);
+            DDLogError(@"YAT notification with agree mic error: %@",error);
             [weakSelf.view makeToast:@"发送PK退出失败" duration:2.0 position:CSToastPositionCenter];
         }
         else
         {
-            [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
-            [[NIMAVChatSDK sharedSDK].netCallManager leaveMeeting:weakSelf.pkMeeting];
-            weakSelf.isSwitchOriginMeeting = YES;
             weakSelf.isAnchorPking = NO;
             [weakSelf doSendPkInfoToAudienceWithPkState:NO];
+            weakSelf.isSwitchOriginMeeting = YES;
+            [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
+            [[NIMAVChatSDK sharedSDK].netCallManager leaveMeeting:weakSelf.pkMeeting];
             
             //先改变布局
             [weakSelf.innerView removePkToast];
@@ -1801,24 +1883,11 @@ NTES_FORBID_INTERACTIVE_POP
 }
 
 #pragma mark - 多主播PK - 收
-- (BOOL)willReceivePkOnlineRequest {
-    NTESAnchorPKStatus pkStatus = [NTESLiveManager sharedInstance].pkStatus;
-    BOOL isOnMic = ([NTESLiveManager sharedInstance].connectorsOnMic.count != 0);
-    NTESMicConnector *dstUser = [NTESLiveManager sharedInstance].dstPkAnchor;
-    if (pkStatus != NTESAnchorPKStatusIdle || isOnMic) {
-        DDLogWarn(@"当前状态 %d, 是否正在连麦：%@, 不再接收 OnlineRequest 请求",
-                  (int)pkStatus, isOnMic ? @"Y" : @"N");
-        [self doSendPkBusyToUser:dstUser.uid];
-        return NO;
-    } else {
-        return YES;
-    }
-}
-
 - (void)didReceivePkOnlineRequestFromUser:(NTESMicConnector *)user {
     NTESAnchorPKStatus pkStatus = [NTESLiveManager sharedInstance].pkStatus;
+    
     if (pkStatus != NTESAnchorPKStatusIdle) {
-        DDLogWarn(@"当前状态 %d, 不再接收 OnlineRequest 请求",
+        DDLogWarn(@"YAT 当前状态 %d, 不再接收 OnlineRequest 请求",
                   (int)pkStatus);
         [self doSendPkBusyToUser:user.uid];
     }
@@ -1836,10 +1905,14 @@ NTES_FORBID_INTERACTIVE_POP
     }
 }
 
+- (void)didReceivePkRoomBypassOnlineRequestFromUser:(NTESMicConnector *)user;
+{
+    //主播推流收到了来自房间推流的PK请求直接拒绝
+    [self doSendPkRejectToUser:user.uid]; //无效用户
+}
+
 - (void)didReceivePkOnlineResponse {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self
-                                             selector:@selector(doWaitOnlineResponseTimeout)
-                                               object:nil]; //取消响应等待
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
     NTESMicConnector *dstUser = [NTESLiveManager sharedInstance].dstPkAnchor;
     if (dstUser) {
         [self doSendPkRequestToUser:dstUser.uid];
@@ -1863,9 +1936,7 @@ NTES_FORBID_INTERACTIVE_POP
 }
 
 - (void)didReceivePkInvalid {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self
-                                             selector:@selector(doWaitOnlineResponseTimeout)
-                                               object:nil]; //取消响应等待
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
     [NTESLiveManager sharedInstance].dstPkAnchor = nil;
     [_pkAlert dismissWithCompletion:^{
@@ -1874,9 +1945,7 @@ NTES_FORBID_INTERACTIVE_POP
 }
 
 - (void)didReceivePkBusy {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self
-                                             selector:@selector(doWaitOnlineResponseTimeout)
-                                               object:nil]; //取消响应等待
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
     [NTESLiveManager sharedInstance].dstPkAnchor = nil;
     [_pkAlert dismissWithCompletion:^{
@@ -1885,7 +1954,7 @@ NTES_FORBID_INTERACTIVE_POP
     }];
 }
 
-- (void)didReceivePkRequest {
+- (void)didReceivePkRequest:(NSString *)pushUrl layoutParam:(NSString *)layoutParam{
     NTESMicConnector *connector = [NTESLiveManager sharedInstance].dstPkAnchor;
     BOOL isOnMic = ([NTESLiveManager sharedInstance].connectorsOnMic.count != 0);
     if (isOnMic) {
@@ -1910,10 +1979,7 @@ NTES_FORBID_INTERACTIVE_POP
 }
 
 - (void)didReceivePkReject {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self
-                                             selector:@selector(doWaitOnlineResponseTimeout)
-                                               object:nil]; //取消在线响应等待
-
+    [NSObject cancelPreviousPerformRequestsWithTarget:self];
     NSString *dstNick = [NTESLiveManager sharedInstance].dstPkAnchor.nick;
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
     [NTESLiveManager sharedInstance].dstPkAnchor = nil;
@@ -1938,10 +2004,10 @@ NTES_FORBID_INTERACTIVE_POP
 {
     self.isAnchorPking = NO;
     [NTESLiveManager sharedInstance].pkStatus = NTESAnchorPKStatusIdle;
-    
+    [self doSendPkInfoToAudienceWithPkState:NO];
     self.isSwitchOriginMeeting = YES;
     [[NIMAVChatSDK sharedSDK].netCallManager leaveMeeting:self.pkMeeting];
-    [self doSendPkInfoToAudienceWithPkState:NO];
+    
     //先改变布局
     [self.innerView removePkToast];
     [self.innerView switchToPlayingUI];
@@ -1971,73 +2037,37 @@ NTES_FORBID_INTERACTIVE_POP
 // demobar 初始化
 -(FUAPIDemoBar *)demoBar{
     if (!_demoBar) {
-        _demoBar = [[FUAPIDemoBar alloc] initWithFrame:CGRectMake(0, self.view.frame.size.height - 300, self.view.frame.size.width, 164)];
-        
-        _demoBar.itemsDataSource = [FUManager shareManager].itemsDataSource;
-        _demoBar.selectedItem = [FUManager shareManager].selectedItem ;
-        
-        _demoBar.filtersDataSource = [FUManager shareManager].filtersDataSource ;
-        _demoBar.beautyFiltersDataSource = [FUManager shareManager].beautyFiltersDataSource ;
-        _demoBar.filtersCHName = [FUManager shareManager].filtersCHName ;
-        _demoBar.selectedFilter = [FUManager shareManager].selectedFilter ;
-        [_demoBar setFilterLevel:[FUManager shareManager].selectedFilterLevel forFilter:[FUManager shareManager].selectedFilter] ;
-        
-        _demoBar.skinDetectEnable = [FUManager shareManager].skinDetectEnable;
-        _demoBar.blurShape = [FUManager shareManager].blurShape ;
-        _demoBar.blurLevel = [FUManager shareManager].blurLevel ;
-        _demoBar.whiteLevel = [FUManager shareManager].whiteLevel ;
-        _demoBar.redLevel = [FUManager shareManager].redLevel;
-        _demoBar.eyelightingLevel = [FUManager shareManager].eyelightingLevel ;
-        _demoBar.beautyToothLevel = [FUManager shareManager].beautyToothLevel ;
-        _demoBar.faceShape = [FUManager shareManager].faceShape ;
-        
-        _demoBar.enlargingLevel = [FUManager shareManager].enlargingLevel ;
-        _demoBar.thinningLevel = [FUManager shareManager].thinningLevel ;
-        _demoBar.enlargingLevel_new = [FUManager shareManager].enlargingLevel_new ;
-        _demoBar.thinningLevel_new = [FUManager shareManager].thinningLevel_new ;
-        _demoBar.jewLevel = [FUManager shareManager].jewLevel ;
-        _demoBar.foreheadLevel = [FUManager shareManager].foreheadLevel ;
-        _demoBar.noseLevel = [FUManager shareManager].noseLevel ;
-        _demoBar.mouthLevel = [FUManager shareManager].mouthLevel ;
-        //_demoBar.hidden = YES;
-        _demoBar.delegate = self;
+        _demoBar = [[FUAPIDemoBar alloc] initWithFrame:CGRectMake(0, self.view.frame.size.height - 300, self.view.frame.size.width, 194)];
+        _demoBar.mDelegate = self;
     }
     return _demoBar ;
 }
 
 /**      FUAPIDemoBarDelegate       **/
 
-// 切换贴纸
-- (void)demoBarDidSelectedItem:(NSString *)itemName {
-    
-    [[FUManager shareManager] loadItem:itemName];
+-(void)filterValueChange:(FUBeautyParam *)param{
+    [[FUManager shareManager] filterValueChange:param];
 }
 
-
-// 更新美颜参数
-- (void)demoBarBeautyParamChanged {
-    
-    [FUManager shareManager].skinDetectEnable = _demoBar.skinDetectEnable;
-    [FUManager shareManager].blurShape = _demoBar.blurShape;
-    [FUManager shareManager].blurLevel = _demoBar.blurLevel ;
-    [FUManager shareManager].whiteLevel = _demoBar.whiteLevel;
-    [FUManager shareManager].redLevel = _demoBar.redLevel;
-    [FUManager shareManager].eyelightingLevel = _demoBar.eyelightingLevel;
-    [FUManager shareManager].beautyToothLevel = _demoBar.beautyToothLevel;
-    [FUManager shareManager].faceShape = _demoBar.faceShape;
-    [FUManager shareManager].enlargingLevel = _demoBar.enlargingLevel;
-    [FUManager shareManager].thinningLevel = _demoBar.thinningLevel;
-    [FUManager shareManager].enlargingLevel_new = _demoBar.enlargingLevel_new;
-    [FUManager shareManager].thinningLevel_new = _demoBar.thinningLevel_new;
-    [FUManager shareManager].jewLevel = _demoBar.jewLevel;
-    [FUManager shareManager].foreheadLevel = _demoBar.foreheadLevel;
-    [FUManager shareManager].noseLevel = _demoBar.noseLevel;
-    [FUManager shareManager].mouthLevel = _demoBar.mouthLevel;
-    
-    [FUManager shareManager].selectedFilter = _demoBar.selectedFilter ;
-    [FUManager shareManager].selectedFilterLevel = _demoBar.selectedFilterLevel;
+-(void)switchRenderState:(BOOL)state{
+    [FUManager shareManager].isRender = state;
 }
 
+-(void)bottomDidChange:(int)index{
+    if (index < 3) {
+        [[FUManager shareManager] setRenderType:FUDataTypeBeautify];
+    }
+    if (index == 3) {
+        [[FUManager shareManager] setRenderType:FUDataTypeStrick];
+    }
+    
+    if (index == 4) {
+        [[FUManager shareManager] setRenderType:FUDataTypeMakeup];
+    }
+    if (index == 5) {
+        [[FUManager shareManager] setRenderType:FUDataTypebody];
+    }
+}
 
 #pragma  mark ----  faceU End  -----
 

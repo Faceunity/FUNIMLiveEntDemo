@@ -15,7 +15,6 @@
 
 @end
 
-
 @interface NTESMixAudioSettingView()
 
 @property (nonatomic,strong) NTESMixAudioSettingBar *bar;
@@ -39,7 +38,6 @@
     _delegate = delegate;
     self.bar.delegate = delegate;
 }
-
 
 - (void)onTapBackground:(id)sender
 {
@@ -74,9 +72,6 @@
     return _bar;
 }
 
-
-
-
 @end
 
 
@@ -90,6 +85,18 @@
 
 @end
 
+@interface NTESMixAudioEffectData : NSObject
+
+@property (nonatomic, assign) NSInteger index;
+
+@property (nonatomic, assign) BOOL selected;
+
+@property (nonatomic, assign) BOOL disable;
+
+@property (nonatomic, copy) NSString *path;
+
+@end
+
 
 @interface NTESMixAudioSettingCell : UITableViewCell
 
@@ -99,16 +106,30 @@
 
 @end
 
+@interface NTESMixAudioEffectCell : UICollectionViewCell
 
-@interface NTESMixAudioSettingBar()<UITableViewDelegate,UITableViewDataSource,NIMNetCallManagerDelegate>
+- (void)refresh:(NTESMixAudioEffectData *)data;
+
+@end
+
+
+@interface NTESMixAudioSettingBar()<UITableViewDelegate,UITableViewDataSource,NIMNetCallManagerDelegate, UICollectionViewDelegate, UICollectionViewDataSource>
 
 @property (nonatomic,copy) NSArray<NTESMixAudioData *> *data;
+
+@property (nonatomic,copy) NSArray<NTESMixAudioEffectData *> *effectData;
+@property (weak, nonatomic) IBOutlet UILabel *titleLab;
+@property (weak, nonatomic) IBOutlet UILabel *effectTitleLab;
 
 @property (nonatomic,strong) IBOutlet UITableView *tableView;
 
 @property (nonatomic,strong) IBOutlet UILabel  *volumeLabel;
 
 @property (nonatomic,strong) IBOutlet UISlider *volumeSlider;
+
+@property (weak, nonatomic) IBOutlet UICollectionView *collectView;
+
+@property (nonatomic, strong) UICollectionViewFlowLayout *collectLayout;
 
 @property (nonatomic,strong) NTESMixAudioData *curentAudioData;
 
@@ -120,16 +141,24 @@
 {
     [super awakeFromNib];
     _data = [self buildData];
+    _effectData = [self buildEffectData];
     [self.tableView registerClass:[NTESMixAudioSettingCell class] forCellReuseIdentifier:@"cell"];
     self.tableView.tableHeaderView = [[UIView alloc] init];
     
     [self.volumeSlider setThumbImage:[UIImage imageNamed:@"icon_volume_slider_normal"] forState:UIControlStateNormal];
     [self.volumeSlider setThumbImage:[UIImage imageNamed:@"icon_volume_slider_disable"] forState:UIControlStateDisabled];
     
+    self.collectView.delegate = self;
+    self.collectView.dataSource = self;
+    self.collectView.backgroundColor = [UIColor clearColor];
+    [self.collectView setCollectionViewLayout:self.collectLayout];
+    [self.collectView registerClass:[NTESMixAudioEffectCell class]
+         forCellWithReuseIdentifier:@"effectCell"];
+    
     [[NIMAVChatSDK sharedSDK].netCallManager addDelegate:self];
     
     //第一次默认关闭
-    [self refresh:NO];
+    [self refresh:YES];
 }
 
 - (void)dealloc
@@ -137,10 +166,18 @@
     [[NIMAVChatSDK sharedSDK].netCallManager removeDelegate:self];
 }
 
-- (IBAction)switchMixAudio:(id)sender
-{
-    BOOL enabled = [(UISwitch *)sender isOn];
-    [self refresh:enabled];
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    _titleLab.origin = CGPointMake(10.0, 14.0);
+    _tableView.frame = CGRectMake(_titleLab.left, _titleLab.bottom + 10.0, self.width - 10.0*2, 90.0);
+    _volumeLabel.origin = CGPointMake(_tableView.left, _tableView.bottom + 10.0);
+    _volumeSlider.frame = CGRectMake(_volumeLabel.right + 14.0, 0, self.width - _volumeLabel.right - 14.0 - 10.0, _volumeSlider.height);
+    _volumeSlider.centerY = _volumeLabel.centerY;
+    _effectTitleLab.origin = CGPointMake(_volumeLabel.left, _volumeLabel.bottom + 14.0);
+    _collectView.frame = CGRectMake(_effectTitleLab.left, _effectTitleLab.bottom + 20.0, _tableView.width, 80.0);
+    CGFloat w = (_collectView.width - 8.0f)/4.0;
+    CGFloat h = (_collectView.height - 4.0f)/2.0;
+    _collectLayout.itemSize = CGSizeMake(w, h);
 }
 
 - (IBAction)changeVolume:(id)sender
@@ -148,7 +185,7 @@
     [self callbackUpdateMixAudio];
 }
 
-- (void)refresh:(BOOL)enabled
+- (void) refresh:(BOOL)enabled
 {
     for (NTESMixAudioData *data in self.data) {
         data.state = enabled? UIControlStateNormal : UIControlStateDisabled;
@@ -181,7 +218,60 @@
     return data;
 }
 
+- (NSArray *)buildEffectData {
+    NSArray *sounds = @[@"Barricade Arpeggio.caf",
+                        @"diamond.caf",
+                        @"Diving Synth Effects 03.caf",
+                        @"Rising Synth Effects 02.caf",
+                        @"voice.aac"];
+    NSMutableArray *datas = [NSMutableArray array];
+    [sounds enumerateObjectsUsingBlock:^(id  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        NSString *path = [[NSBundle mainBundle] pathForResource:obj ofType:nil];
+        if (path) {
+            NTESMixAudioEffectData *model = [[NTESMixAudioEffectData alloc] init];
+            model.index = datas.count;
+            model.disable = NO;
+            model.path = path;
+            [datas addObject:model];
+        }
+    }];
+    return datas;
+}
 
+- (void)updateAudioEffectSelectedWithIndex:(NSInteger)index {
+    _collectView.userInteractionEnabled = NO;
+    [_effectData enumerateObjectsUsingBlock:^(NTESMixAudioEffectData * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (idx == index) {
+            obj.selected = YES;
+            obj.disable = NO;
+        } else {
+            obj.selected = NO;
+            obj.disable = YES;
+        }
+    }];
+    [_collectView reloadData];
+}
+
+- (void)updateAudioEffectUnSelected {
+    _collectView.userInteractionEnabled = YES;
+    [_effectData enumerateObjectsUsingBlock:^(NTESMixAudioEffectData * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        if (obj.selected) {
+            obj.selected = NO;
+        }
+        if (obj.disable) {
+            obj.disable = NO;
+        }
+    }];
+    [_collectView reloadData];
+}
+
+- (void)doPlayEffectWithPath:(NSString *)path {
+    NSURL *url = [NSURL fileURLWithPath:path];
+    NIMNetCallAudioFileMixTask *task = [[NIMNetCallAudioFileMixTask alloc] initWithFileURL:url];
+    [[NIMAVChatSDK sharedSDK].netCallManager playSoundEffect:task];
+}
+
+#pragma mark - UITableViewDelegate,UITableViewDataSource
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     return 45.f;
@@ -207,6 +297,29 @@
     [tableView deselectRowAtIndexPath:indexPath animated:NO];
 }
 
+#pragma mark - <UICollectionViewDelegate, UICollectionViewDataSource>
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section {
+    return _effectData.count;
+}
+
+- (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
+    NTESMixAudioEffectCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"effectCell" forIndexPath:indexPath];
+    NTESMixAudioEffectData *model = _effectData[indexPath.row];
+    [cell refresh:model];
+    return cell;
+}
+
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath {
+    CGFloat w = (collectionView.width - 8.0f)/4.0;
+    CGFloat h = (collectionView.height - 4.0f)/2.0;
+    return CGSizeMake(w, h);
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
+    NTESMixAudioEffectData *model = _effectData[indexPath.row];
+    [self doPlayEffectWithPath:model.path];
+    [self updateAudioEffectSelectedWithIndex:indexPath.row];
+}
 
 - (void)onPressPlay:(id)sender
 {
@@ -276,6 +389,18 @@
     [self.tableView reloadData];
 }
 
+- (void)onSoundEffectPlayCompleted {
+    [self updateAudioEffectUnSelected];
+}
+
+- (UICollectionViewFlowLayout *)collectLayout {
+    if (!_collectLayout) {
+        _collectLayout = [[UICollectionViewFlowLayout alloc] init];
+        _collectLayout.minimumLineSpacing = 1.0f;
+        _collectLayout.minimumInteritemSpacing = 1.0f;
+    }
+    return _collectLayout;
+}
 
 @end
 
@@ -357,5 +482,53 @@
 
 
 @implementation NTESMixAudioData
+
+@end
+
+@interface NTESMixAudioEffectCell ()
+
+@property (nonatomic, strong) UILabel *titleLab;
+
+@end
+
+@implementation NTESMixAudioEffectCell
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    if (self = [super initWithFrame:frame]) {
+        [self addSubview:self.titleLab];
+    }
+    return self;
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    _titleLab.frame = self.bounds;
+}
+
+- (void)refresh:(NTESMixAudioEffectData *)data {
+    _titleLab.text = [NSString stringWithFormat:@"音效%zi", data.index + 1];
+    if (data.selected) {
+        _titleLab.textColor = [UIColor blueColor];
+    } else if (data.disable) {
+        _titleLab.textColor = UIColorFromRGB(0x666666);
+    } else {
+        _titleLab.textColor = UIColorFromRGB(0xffffff);
+    }
+}
+
+#pragma mark - Getter
+- (UILabel *)titleLab {
+    if (!_titleLab) {
+        _titleLab = [[UILabel alloc] init];
+        _titleLab.font = [UIFont systemFontOfSize:15.0];
+        _titleLab.textColor = UIColorFromRGB(0xffffff);
+    }
+    return _titleLab;
+}
+
+@end
+
+
+@implementation NTESMixAudioEffectData
 
 @end

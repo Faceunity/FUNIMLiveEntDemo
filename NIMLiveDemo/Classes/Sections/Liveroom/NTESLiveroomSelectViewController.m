@@ -131,7 +131,10 @@
             [NTESLiveManager sharedInstance].type = liveType;
             [NTESLiveManager sharedInstance].role = NTESLiveRoleAudience;
 
+        
+            
             NTESAudienceLiveViewController *vc = [[NTESAudienceLiveViewController alloc] initWithChatroomId:self.roomId streamUrl:playStreamUrl];
+            vc.modalPresentationStyle = UIModalPresentationFullScreen;
             UINavigationController *nav = self.navigationController;
             [nav presentViewController:vc animated:YES completion:^{
                 NSMutableArray *vcs = [nav.viewControllers mutableCopy];

@@ -32,6 +32,10 @@
 
 + (NIMMessage *)msgWithPKExited;
 
++ (NIMMessage *)msgWithAnchorJoined;
+
++ (NIMMessage *)msgWithAnchorLeft;
+
 @end
 
 
@@ -51,8 +55,9 @@
 
 //主播PK
 + (NIMCustomSystemNotification *)notificationWithPkOnlineRequest:(NSString *)roomId;
++ (NIMCustomSystemNotification *)notificationWithPkRoomBypassOnlineRequest:(NSString *)roomId;
 + (NIMCustomSystemNotification *)notificationWithPkOnlineResponse:(NSString *)roomId;
-+ (NIMCustomSystemNotification *)notificationWithPkRequest:(NSString *)roomId;
++ (NIMCustomSystemNotification *)notificationWithPkRequest:(NSString *)roomId pushUrl:(NSString *)pushUrl layoutParam:(NSString *)layoutParam;
 + (NIMCustomSystemNotification *)notificationWithPkCancel:(NSString *)roomId;
 + (NIMCustomSystemNotification *)notificationWithPkAgreeWithRoomName:(NSString *)roomName roomId:(NSString *)roomId;
 + (NIMCustomSystemNotification *)notificationWithPkReject:(NSString *)roomId;

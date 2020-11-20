@@ -7,7 +7,6 @@
 //
 
 #import "NTESLiveBypassView.h"
-#import "NTESGLView.h"
 #import "UIView+NTES.h"
 #import "NIMAvatarImageView.h"
 #import "NTESMicConnector.h"
@@ -51,11 +50,13 @@ static const CGSize  NTESLiveByPassOrientationRightSize  = { 170, 100 };
 
 @property (nonatomic, strong) UIView *localVideoView;
 @property (nonatomic, strong) UIImageView *localAudioView;
-@property (nonatomic, strong) NTESGLView  *glView;
+@property (nonatomic, strong) UIView  *remoteViewContainer;
 @property (nonatomic, strong) NTESLiveBypassExitConfirmView *exitConfirmView;
 @property (nonatomic, strong) NTESLiveBypassLoadingView *loadingView;
 @property (nonatomic, strong) NTESLiveBypassEndView *endView;
 @property (nonatomic, strong) UIButton    *stopBypassButton; //结束互动直播按钮
+@property (nonatomic,strong) UILabel *volumeLabel;
+@property (nonatomic,assign) uint64_t volumeUpateTime;
 
 @end
 
@@ -95,9 +96,9 @@ static const CGSize  NTESLiveByPassOrientationRightSize  = { 170, 100 };
     _localAudioView.animationDuration = 1.2f;
     _localAudioView.animationImages = @[image1,image2,image3];
     
-    _glView = [[NTESGLView alloc] initWithFrame:CGRectZero];
-    _glView.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"icon_glview_background"]];
-    _glView.contentMode = UIViewContentModeScaleAspectFill;
+    _remoteViewContainer = [[UIView alloc] initWithFrame:CGRectZero];
+    _remoteViewContainer.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"icon_glview_background"]];
+
     _exitConfirmView = [[NTESLiveBypassExitConfirmView alloc] init];
     [_exitConfirmView.confirmButton addTarget:self action:@selector(confirmExit:) forControlEvents:UIControlEventTouchUpInside];
     [_exitConfirmView.cancelButton addTarget:self action:@selector(cancelExit:) forControlEvents:UIControlEventTouchUpInside];
@@ -112,9 +113,15 @@ static const CGSize  NTESLiveByPassOrientationRightSize  = { 170, 100 };
     _stopBypassButton.size = CGSizeMake(44, 44);
     [_stopBypassButton addTarget:self action:@selector(stopBypassingConfirm:) forControlEvents:UIControlEventTouchUpInside];
     
+    _volumeLabel = [[UILabel alloc] init];
+    _volumeLabel.font = [UIFont systemFontOfSize:11.f];
+    _volumeLabel.backgroundColor = [UIColor clearColor];
+    _volumeLabel.textColor = UIColorFromRGB(0xffffff);
+    
     [self addSubview:_localVideoView];
     [self addSubview:_localAudioView];
-    [self addSubview:_glView];
+    [self addSubview:_remoteViewContainer];
+    [self addSubview:_volumeLabel];
     [self addSubview:_exitConfirmView];
     [self addSubview:_loadingView];
     [self addSubview:_endView];
@@ -165,13 +172,11 @@ static const CGSize  NTESLiveByPassOrientationRightSize  = { 170, 100 };
     }
 }
 
-
-- (void)updateRemoteView:(NSData *)yuvData
-                   width:(NSUInteger)width
-                  height:(NSUInteger)height
-{
+- (void)addRemoteView:(UIView *)remoteView {
     self.backgroundColor = UIColorFromRGBA(0x0,.2);
-    [self.glView render:yuvData width:width height:height];
+    [_remoteViewContainer.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    remoteView.frame = _remoteViewContainer.bounds;
+    [_remoteViewContainer addSubview:remoteView];
 }
 
 - (void)refresh:(NTESMicConnector *)connector status:(NTESLiveBypassViewStatus)status
@@ -179,6 +184,16 @@ static const CGSize  NTESLiveByPassOrientationRightSize  = { 170, 100 };
     self.status = status;
     [self.loadingView refresh:connector];
     [self.endView refresh:connector];
+}
+
+- (void)setVolume:(UInt16)volume {
+    _volume = volume;
+    
+    uint64_t curTime = [[NSDate date] timeIntervalSince1970] * 1000;
+    if (curTime - _volumeUpateTime > 1000) {
+        _volumeLabel.text = [NSString stringWithFormat:@"音量：%d", volume];
+        _volumeUpateTime = curTime;
+    }
 }
 
 - (void)setStatus:(NTESLiveBypassViewStatus)status
@@ -189,10 +204,6 @@ static const CGSize  NTESLiveByPassOrientationRightSize  = { 170, 100 };
     _lastStatus = _status;
     _status = status;
     
-    //清空并重置画面
-    [_glView render:nil width:0 height:0];
-    _glView.backgroundColor = [UIColor colorWithPatternImage:[UIImage imageNamed:@"icon_glview_background"]];
-
     for (UIView *subView in self.subviews) {
         subView.hidden = YES;
     }
@@ -208,27 +219,32 @@ static const CGSize  NTESLiveByPassOrientationRightSize  = { 170, 100 };
             self.stopBypassButton.hidden = !_isAnchor;
             self.localVideoView.hidden = YES;
             self.localAudioView.hidden = NO;
+            self.volumeLabel.hidden = NO;
             break;
         case NTESLiveBypassViewStatusLoading:
             self.localVideoView.hidden = YES;
             self.loadingView.hidden = NO;
+            self.volumeLabel.hidden = YES;
             self.stopBypassButton.hidden = !_isAnchor;
             break;
         case NTESLiveBypassViewStatusStreamingVideo:
             self.localVideoView.hidden = YES;
-            self.glView.hidden = NO;
+            self.remoteViewContainer.hidden = NO;
             self.exitConfirmView.titleLabel.text = @"确定结束语音互动？";
             self.stopBypassButton.hidden = !_isAnchor;
+            self.volumeLabel.hidden = NO;
             break;
         case NTESLiveBypassViewStatusStreamingAudio:
             self.localVideoView.hidden = YES;
             self.localAudioView.hidden = NO;
             self.stopBypassButton.hidden = !_isAnchor;
+            self.volumeLabel.hidden = NO;
             break;
         case NTESLiveBypassViewStatusLocalAudio:
             self.localVideoView.hidden = YES;
             self.localAudioView.hidden = NO;
             self.stopBypassButton.hidden = NO;
+            self.volumeLabel.hidden = NO;
             break;
         case NTESLiveBypassViewStatusLocalVideo:
             self.localVideoView.hidden = NO;
@@ -238,11 +254,12 @@ static const CGSize  NTESLiveByPassOrientationRightSize  = { 170, 100 };
                 [self.localVideoView addSubview:_localVideoDisplayView];
             }
             self.stopBypassButton.hidden = NO;
+            self.volumeLabel.hidden = NO;
             break;
         case NTESLiveBypassViewStatusExitConfirm:
             self.localVideoView.hidden = YES;
             self.exitConfirmView.hidden = NO;
-            self.glView.hidden = YES;
+            self.remoteViewContainer.hidden = YES;
             self.stopBypassButton.hidden = !_isAnchor;
             return;
         default:
@@ -297,12 +314,15 @@ static const CGSize  NTESLiveByPassOrientationRightSize  = { 170, 100 };
         obj.frame = weakSelf.localVideoView.bounds;
     }];
     self.localAudioView.frame = self.bounds;
-    self.glView.frame = self.bounds;
-    
+    self.volumeLabel.frame = CGRectMake(0, 0, self.width, 40.0);
+    self.remoteViewContainer.frame = self.bounds;
+    [self.remoteViewContainer.subviews enumerateObjectsUsingBlock:^(__kindof UIView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
+        obj.frame = weakSelf.remoteViewContainer.bounds;
+    }];
     if (localPreView) {
         localPreView.frame = self.bounds;
     }
-
+    
     self.exitConfirmView.frame = self.bounds;
     self.loadingView.frame = self.bounds;
     self.endView.frame = self.bounds;
@@ -498,4 +518,5 @@ static const CGSize  NTESLiveByPassOrientationRightSize  = { 170, 100 };
     self.statusLabel.top = self.nickLabel.bottom + nickAndStatusSpacing;
     self.statusLabel.centerX = self.width * .5f;
 }
+
 @end

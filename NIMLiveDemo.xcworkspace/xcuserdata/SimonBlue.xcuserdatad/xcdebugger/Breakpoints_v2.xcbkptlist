@@ -10,12 +10,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../NIMAVChat/NIMAVChat/Classes/NetCall/Manager/NIMNetCallManager.mm"
-            timestampString = "563706996.264071"
+            timestampString = "527051163.725652"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "1103"
             endingLineNumber = "1103"
-            landmarkName = "-invokeInitCall:chatType:uuid:option:"
+            landmarkName = "-onCalleeAck:"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -26,13 +26,13 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../NIMAVChat/NIMAVChat/Classes/RealtimeNIO/NIMNVSManager.mm"
-            timestampString = "563878214.2806669"
+            timestampString = "512040456.524293"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "40"
             endingLineNumber = "40"
-            landmarkName = "NIMNVSManager()"
-            landmarkType = "2">
+            landmarkName = "+sharedManager"
+            landmarkType = "7">
             <Locations>
                <Location
                   shouldBeEnabled = "No"
@@ -74,7 +74,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NIMLiveDemo/Classes/Sections/Liveroom/Object/NTESMediaCapture.m"
-            timestampString = "564301523.14625"
+            timestampString = "533792200.234571"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "125"
@@ -90,13 +90,45 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../NIMAVChat/NIMAVChat/Classes/NetCall/Manager/NIMNetCallManager.mm"
-            timestampString = "563706996.264858"
+            timestampString = "527051163.725652"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "1623"
             endingLineNumber = "1623"
-            landmarkName = "NIMNetCallManager"
-            landmarkType = "3">
+            landmarkName = "-netCallInfoByKey:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NIMLiveDemo/Classes/Sections/Liveroom/NTESAudienceLiveViewController.m"
+            timestampString = "531281519.538293"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "111"
+            endingLineNumber = "111"
+            landmarkName = "-viewWillAppear:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NIMLiveDemo/Classes/Sections/Liveroom/View/NTESLiveInnerView.m"
+            timestampString = "526982758.279638"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "490"
+            endingLineNumber = "490"
+            landmarkName = "-switchToBypassStreamingUI:"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -106,12 +138,44 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NIMLiveDemo/Classes/Sections/Liveroom/View/NTESLiveBypassView.m"
-            timestampString = "564307535.295483"
+            timestampString = "519037098.557223"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "86"
             endingLineNumber = "86"
             landmarkName = "-setup"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NIMLiveDemo/Classes/Sections/Liveroom/View/NTESLiveInnerView.m"
+            timestampString = "526982758.279638"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "808"
+            endingLineNumber = "808"
+            landmarkName = "-glView"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NIMLiveDemo/Classes/Sections/Liveroom/NTESAudienceLiveViewController.m"
+            timestampString = "531281519.542241"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "160"
+            endingLineNumber = "160"
+            landmarkName = "-onRecvMessages:"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -305,6 +369,53 @@
             endingLineNumber = "457"
             landmarkName = "-onNTSConnectResult:sessionID:"
             landmarkType = "7">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "-[NIMRTSManager onNTSConnectResult:sessionID:]"
+                  moduleName = "NIMAVChat"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/apple/Documents/WorkProject/NetEase/NIM/NIMAVChat/NIMAVChat/Classes/RTS/NIMRTSManager.mm"
+                  timestampString = "552276433.9562761"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "457"
+                  endingLineNumber = "457"
+                  offsetFromSymbolStart = "156">
+               </Location>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "__46-[NIMRTSManager onNTSConnectResult:sessionID:]_block_invoke"
+                  moduleName = "NIMAVChat"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/apple/Documents/WorkProject/NetEase/NIM/NIMAVChat/NIMAVChat/Classes/RTS/NIMRTSManager.mm"
+                  timestampString = "552276433.958269"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "457"
+                  endingLineNumber = "457"
+                  offsetFromSymbolStart = "28">
+               </Location>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "__destroy_helper_block_.218"
+                  moduleName = "NIMAVChat"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/apple/Documents/WorkProject/NetEase/NIM/NIMAVChat/NIMAVChat/Classes/RTS/NIMRTSManager.mm"
+                  timestampString = "552276433.960119"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "457"
+                  endingLineNumber = "457"
+                  offsetFromSymbolStart = "20">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -314,11 +425,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NIMLiveDemo/Classes/Sections/Liveroom/View/NTESLiveActionView.m"
-            timestampString = "563706176.95925"
+            timestampString = "526981877.779105"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "180"
-            endingLineNumber = "180"
+            startingLineNumber = "179"
+            endingLineNumber = "179"
             landmarkName = "-layoutSubviews"
             landmarkType = "7">
          </BreakpointContent>
@@ -346,13 +457,13 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "../NIMAVChat/NIMAVChat/Classes/RealtimeNIO/NIMNVSManager.mm"
-            timestampString = "563878214.281145"
+            timestampString = "524632531.798177"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "531"
             endingLineNumber = "531"
-            landmarkName = "-audioOutputDevices"
-            landmarkType = "7">
+            landmarkName = "NIMNVSManager"
+            landmarkType = "3">
             <Locations>
                <Location
                   shouldBeEnabled = "No"
@@ -468,7 +579,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NIMLiveDemo/Classes/Sections/Liveroom/Manager/NTESLiveManager.m"
-            timestampString = "564569990.785036"
+            timestampString = "526285661.598613"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "89"
@@ -484,12 +595,28 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NIMLiveDemo/Classes/Sections/Liveroom/Manager/NTESLiveManager.m"
-            timestampString = "564569990.785414"
+            timestampString = "526285662.43096"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "94"
             endingLineNumber = "94"
             landmarkName = "-roomInfo:"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "NIMLiveDemo/Classes/Sections/Liveroom/Object/NTESMessageModel.m"
+            timestampString = "526286018.056063"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "31"
+            endingLineNumber = "31"
+            landmarkName = "-formatMessage"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -548,7 +675,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NIMLiveDemo/Classes/Sections/Liveroom/Manager/NTESLiveManager.m"
-            timestampString = "564569990.785707"
+            timestampString = "531281872.308298"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "181"
@@ -564,7 +691,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NIMLiveDemo/Classes/Sections/Liveroom/Manager/NTESLiveManager.m"
-            timestampString = "564569990.785979"
+            timestampString = "531281882.424786"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "217"
@@ -580,7 +707,7 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "NIMLiveDemo/Classes/Sections/Liveroom/Manager/NTESLiveManager.m"
-            timestampString = "564569990.786232"
+            timestampString = "531281938.33489"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "182"
@@ -627,45 +754,13 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "../NIMAVChat/NIMAVChat/Classes/NetCall/Manager/NIMNetCallManager.mm"
-            timestampString = "563706996.268693"
+            filePath = "NIMLiveDemo/Classes/Sections/Liveroom/Object/Audience/NTESLiveAudienceHandler.m"
+            timestampString = "552276699.866106"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1915"
-            endingLineNumber = "1915"
-            landmarkName = "-onLoginError:"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../NIMAVChat/NIMAVChat/Classes/RealtimeNIO/NIMNVSManager.mm"
-            timestampString = "563878214.281486"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "225"
-            endingLineNumber = "225"
-            landmarkName = "-stopSession:"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "../NIMAVChat/NIMAVChat/Classes/RealtimeNIO/NIMNVSManager.mm"
-            timestampString = "563878214.281569"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "233"
-            endingLineNumber = "233"
-            landmarkName = "-stopSession:"
+            startingLineNumber = "127"
+            endingLineNumber = "127"
+            landmarkName = "-dealWithBypassCustomNotification:"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
@@ -675,29 +770,13 @@
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "../NIMAVChat/NIMAVChat/Classes/RealtimeNIO/NIMNVSManager.mm"
-            timestampString = "563878214.281631"
+            filePath = "NIMLiveDemo/Classes/Sections/Liveroom/Object/Audience/NTESLiveAudienceHandler.m"
+            timestampString = "552277955.479562"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "78"
-            endingLineNumber = "78"
-            landmarkName = "-start:"
-            landmarkType = "7">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "NIMLiveDemo/Classes/Sections/Liveroom/View/NTESLiveBypassView.m"
-            timestampString = "564307535.296757"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "225"
-            endingLineNumber = "225"
-            landmarkName = "-setStatus:"
+            startingLineNumber = "123"
+            endingLineNumber = "123"
+            landmarkName = "-dealWithBypassCustomNotification:"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

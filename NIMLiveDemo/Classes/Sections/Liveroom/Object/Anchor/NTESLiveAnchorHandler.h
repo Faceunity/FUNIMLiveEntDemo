@@ -15,11 +15,12 @@
 - (void)didUpdateChatroomMemebers:(BOOL)isAdd;
 
 - (void)didReceivePkOnlineRequestFromUser:(NTESMicConnector *)user;
+- (void)didReceivePkRoomBypassOnlineRequestFromUser:(NTESMicConnector *)user;
 - (void)didReceivePkOnlineResponse;
 - (void)didReceivePkCancel;
 - (void)didReceivePkInvalid;
 - (void)didReceivePkBusy;
-- (void)didReceivePkRequest;
+- (void)didReceivePkRequest:(NSString *)pushUrl layoutParam:(NSString *)layoutParam;
 - (void)didReceivePkReject;
 - (void)didReceivePkAgreeWithRoomName:(NSString *)roomName;
 - (void)didReceivePkExit;

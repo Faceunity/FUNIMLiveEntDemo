@@ -150,9 +150,12 @@
 + (NIMNetCallVideoCaptureParam *)videoCaptureParam
 {
     NIMNetCallVideoCaptureParam *param = [[NIMNetCallVideoCaptureParam alloc] init];
-    param.preferredVideoQuality = [NTESUserUtil defaultVideoQuality];
-    param.videoFrameRate = NIMNetCallVideoFrameRate25FPS;
-    param.format = [[NTESBundleSetting sharedConfig] videoCaptureFormat];
+    param.preferredVideoQuality = NIMNetCallVideoQualityHigh;
+    param.previewVideoQuality = NIMNetCallVideoQualityHigh;
+    param.videoFrameRate = NIMNetCallVideoFrameRateMax;
+    param.format = NIMNetCallVideoCaptureFormat420f;
+    param.startWithBackCamera = NO;
+    param.isCodeMirror = YES;
     param.videoProcessorParam = [[NIMNetCallVideoProcessorParam alloc] init];
     
     return param;
@@ -160,7 +163,8 @@
 
 + (NIMNetCallVideoQuality)defaultVideoQuality
 {
-    return [NTESLiveManager sharedInstance].liveQuality == NTESLiveQualityNormal? NIMNetCallVideoQualityDefault : NIMNetCallVideoQuality540pLevel;
+    return [NTESLiveManager sharedInstance].liveQuality == NTESLiveQualityNormal? NIMNetCallVideoQualityDefault : NIMNetCallVideoQuality720pLevel;
+    
 }
 
 + (NSString *)bypassStreamingMixCustomLayoutConfigForPK

@@ -46,9 +46,12 @@
                                                            userInfo:nil];
         errMsg = dict[@"errmsg"];
     }
-    if (_handler) {
-        _handler(resultError,errMsg);
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (_handler) {
+            _handler(resultError,errMsg);
+        }
+    });
+    
     
 }
 

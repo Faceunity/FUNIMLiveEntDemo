@@ -43,10 +43,8 @@
 
         
         _netcallInfo = @{
-                         @(NIMNetCallNetStatusVeryGood) : @{@"icon":@"icon_netstatus_verygood",@"status":@"网络通畅:"},
                          @(NIMNetCallNetStatusGood)     : @{@"icon":@"icon_netstatus_good",    @"status":@"网络正常:"},
                          @(NIMNetCallNetStatusBad)      : @{@"icon":@"icon_netstatus_bad",     @"status":@"网络较差:"},
-                         @(NIMNetCallNetStatusVeryBad)  : @{@"icon":@"icon_netstatus_verybad", @"status":@"网络极差:"},
                         };
         
     }
@@ -102,8 +100,6 @@ static NSInteger statusAndIconGap = 2.f;
                     return @"建议降低直播清晰度";
                 }
                 break;
-            case NIMNetCallNetStatusVeryBad:
-                return @"建议切换为音频直播";
             default:
                 break;
         }

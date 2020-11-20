@@ -16,6 +16,7 @@
 #import "NTESFilterMenuBar.h"
 #import "NTESFiterMenuView.h"
 #import "NTESLiveUtil.h"
+#import "NTESFiterStatusModel.h"
 
 #define orientationSelectViewHeight 100
 
@@ -198,6 +199,18 @@
         _filterBar.bottom = self.showFilterBar? self.width: self.width+_filterBar.barHeight;
 
     }
+}
+
+- (void)switchToPreviewUI
+{
+    self.coverView.hidden = YES;
+    self.startLiveButton.hidden = NO;
+    self.cameraButton.hidden = NO;
+    self.beautifyButton.hidden = NO;
+    self.orientationButton.hidden = NO;
+    self.orientationSelectView.hidden = NO;
+    self.closeButton.hidden = NO;
+    [self.startLiveButton setTitle:@"开始直播" forState:UIControlStateNormal];
 }
 
 - (void)switchToWaitingUI

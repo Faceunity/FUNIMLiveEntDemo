@@ -18,6 +18,8 @@
 
 @property (nonatomic, copy)   NSString *avatar;
 
+@property (nonatomic, assign) UInt64 meetingUid;
+
 @end
 
 

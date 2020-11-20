@@ -76,9 +76,10 @@
 - (void)runTask:(id<NTESDemoServiceTask>)task
 {
     NSURLRequest *request = [task taskRequest];
-    [NSURLConnection sendAsynchronousRequest:request
-                                       queue:[NSOperationQueue mainQueue]
-                           completionHandler:^(NSURLResponse * _Nullable response, NSData * _Nullable data, NSError * _Nullable connectionError) {
+    
+    NSURLSessionTask *sessionTask =
+    [[NSURLSession sharedSession] dataTaskWithRequest:request
+                                    completionHandler:^(NSData * _Nullable data, NSURLResponse * _Nullable response, NSError * _Nullable connectionError) {
                                id jsonObject = nil;
                                NSError *error = connectionError;
                                if (connectionError == nil &&
@@ -102,5 +103,6 @@
                                              error:error];
                                
                            }];
+     [sessionTask resume];
 }
 @end

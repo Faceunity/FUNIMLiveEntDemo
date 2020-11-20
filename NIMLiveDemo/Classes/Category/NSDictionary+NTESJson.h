@@ -24,4 +24,6 @@
 - (unsigned long long)jsonUnsignedLongLong:(NSString *)key;
 
 - (double)jsonDouble: (NSString *)key;
+
++ (NSDictionary *)dictionaryWithJsonString:(NSString *)jsonString;
 @end

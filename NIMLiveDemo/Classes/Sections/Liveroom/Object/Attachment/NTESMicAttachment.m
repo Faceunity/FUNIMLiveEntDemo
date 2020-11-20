@@ -20,7 +20,8 @@
                                      NTESCMConnectMicUid    : self.connectorId,
                                      NTESCMConnectMicNick   : self.nick.length? self.nick : @"",
                                      NTESCMConnectMicAvatar : self.avatar.length? self.avatar : @"",
-                                     NTESCMCallStyle        : @(self.type)
+                                     NTESCMCallStyle        : @(self.type),
+                                     NTESCMConnectMicMeetingUid : @(self.meetingUid)
                                      },
                              };
     return [encode jsonBody];

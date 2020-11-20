@@ -27,6 +27,8 @@ typedef void(^NTESLivePlayerShutdownHandler)(void);
 
 - (void)shutdown:(NTESLivePlayerShutdownHandler)handler;
 
+- (void)didUpdateVolume:(UInt16)volume meetingUid:(UInt64)meetingUid; //子类重载
+
 @end
 
 

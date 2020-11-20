@@ -36,6 +36,8 @@ typedef void(^NTESPlayerShutdownCompletion)(void);
 
 - (void)didUpdateLiveOrientation:(NIMVideoOrientation)orientation;
 
+- (void)didUpdateLiveBypassType:(NTESBypassType)bypassType;
+
 - (void)didUpdateChatroomMemebers:(BOOL)isAdd userId:(NSString *)userId;
 
 - (void)didUpdateToastWithPkInfo:(NTESPKInfo *)info;

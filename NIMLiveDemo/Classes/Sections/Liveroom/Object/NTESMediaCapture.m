@@ -17,6 +17,9 @@
 /* faceU */
 #import "FUManager.h"
 
+#import "FUTestRecorder.h"
+
+
 typedef void(^LiveStreamHandler)(NSError *error);
 
 @interface NTESMediaCapture(){
@@ -56,6 +59,8 @@ typedef void(^LiveStreamHandler)(NSError *error);
 
 - (void)processVideoSampleBuffer:(CMSampleBufferRef)sampleBuffer
 {
+
+    [[FUTestRecorder shareRecorder] processFrameWithLog];
     
     CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
     /* faceU */
@@ -63,7 +68,7 @@ typedef void(^LiveStreamHandler)(NSError *error);
     
     size_t bufferWidth = 0;
     size_t bufferHeight = 0;
-    NSLog(@"视频数据----");
+    
     if (CVPixelBufferIsPlanar(pixelBuffer)) {
         bufferHeight = CVPixelBufferGetHeightOfPlane(pixelBuffer, 0);
         bufferWidth = CVPixelBufferGetWidthOfPlane(pixelBuffer, 0);
@@ -71,6 +76,7 @@ typedef void(^LiveStreamHandler)(NSError *error);
         bufferWidth = CVPixelBufferGetWidth(pixelBuffer);
         bufferHeight = CVPixelBufferGetHeight(pixelBuffer);
     }
+
     
     if ([NTESLiveManager sharedInstance].orientation == NIMVideoOrientationLandscapeRight) {
         if (bufferWidth < bufferHeight) {
@@ -79,7 +85,7 @@ typedef void(^LiveStreamHandler)(NSError *error);
         }
     }
     
-    [[NIMAVChatSDK sharedSDK].netCallManager sendVideoSampleBuffer:sampleBuffer];
+//    [[NIMAVChatSDK sharedSDK].netCallManager sendVideoSampleBuffer:sampleBuffer];
 
 }
 
@@ -148,8 +154,9 @@ typedef void(^LiveStreamHandler)(NSError *error);
 - (void)startLiveStreamHandler:(NIMNetCallMeetingHandler)handler
 {
 
-    if (!self.isLiveStream) {
+    if (!self.isLiveStream || self.canContinueLiveStream) {
         self.isLiveStream = YES;
+        self.canContinueLiveStream = NO;
         __weak typeof(self) weakSelf = self;
         
         [[NIMAVChatSDK sharedSDK].netCallManager joinMeeting:_currentMeeting completion:^(NIMNetCallMeeting * _Nonnull meeting, NSError * _Nonnull error) {
@@ -235,6 +242,7 @@ typedef void(^LiveStreamHandler)(NSError *error);
 
     self.displayView.frame = displayViewframe;
 
+    self.displayView.hidden = NO;
     [self.containerView addSubview:self.displayView];
 }
 
