@@ -150,6 +150,7 @@
         
         //默认预览镜像开启
         self.isPreviewMirrorOn = YES;
+        self.isCodeMirrirOn = YES;
         self.isLastPreviewMirrorOn = self.isPreviewMirrorOn;
         self.isLastCodeMirrirOn = self.isCodeMirrirOn;
         

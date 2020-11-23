@@ -26,6 +26,7 @@
             _state  = [ext jsonInteger:@"state"];
             _avatar = [info jsonString:@"avatar"];
             _nick   = [info jsonString:@"nick"];
+            _meetingUid = [info jsonUnsignedLongLong:@"meetingUid"];
         }
     }
     return self;
@@ -36,6 +37,7 @@
     NTESMicConnector *instance = [[NTESMicConnector alloc] init];
     instance.uid   = [[NIMSDK sharedSDK].loginManager currentAccount];
     instance.type  = [NTESLiveManager sharedInstance].bypassType;
+    instance.meetingUid = [[NIMAVChatSDK sharedSDK].netCallManager getMeetingIdWithUserUid:instance.uid];
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:roomId];
     instance.avatar = member.roomAvatar;
     instance.nick   = member.roomNickname;

@@ -40,6 +40,9 @@
 //查询上麦用户
 - (NTESMicConnector *)connectorOnMicWithUid:(NSString *)uid;
 
+//查询上麦用户uid
+- (NSString *)connectorUidOnMicWithMeetingUid:(UInt64)meetingUid;
+
 //是否可以添加上麦用户
 - (BOOL)canAddConnectorOnMic;
 

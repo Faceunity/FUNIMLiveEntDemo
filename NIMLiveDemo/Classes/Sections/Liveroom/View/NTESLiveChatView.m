@@ -186,30 +186,27 @@
     [self.tableView layoutIfNeeded];
     
     
-    [self changeInsets:models];
-    [self scrollToBottom];
+    //[self changeInsets:models];
+    [self scrollToBottom:models];
 }
 
-- (void)changeInsets:(NSArray<NTESMessageModel *> *)newModels
+- (void)scrollToBottom:(NSArray<NTESMessageModel *> *)newModels
 {
-    CGFloat height = 0;
-    for (NTESMessageModel *model in newModels) {
-        height += model.height;
-    }
     UIEdgeInsets insets = self.tableView.contentInset;
-    CGFloat contentHeight = self.tableView.contentSize.height - insets.top;
-    contentHeight += height;
-    CGFloat top = contentHeight > self.tableView.height? 0 : self.tableView.height - contentHeight;
-    insets.top = top;
-    self.tableView.contentInset = insets;
-}
-
-- (void)scrollToBottom
-{
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        CGFloat offset = self.tableView.contentSize.height - self.tableView.height;
-        [self.tableView scrollRectToVisible:CGRectMake(0, offset, self.tableView.width, self.tableView.height) animated:YES];
-    });
+    if (insets.top != 0 ) {
+        CGFloat height = 0;
+        for (NTESMessageModel *model in newModels) {
+            height += (model.height + 8.0 + 9.0);
+        }
+        CGFloat top = insets.top - height;
+        insets.top = MAX(top, 0);
+        [UIView animateWithDuration:0.25 animations:^{
+            self.tableView.contentInset = insets;
+        }];
+    } else {
+        NSIndexPath *indexPath = [NSIndexPath indexPathForRow:_messages.count - 1 inSection:0];
+        [_tableView scrollToRowAtIndexPath:indexPath atScrollPosition:UITableViewScrollPositionBottom animated:YES];
+    }
 }
 
 static const void * const NTESDispatchMessageDataPrepareSpecificKey = &NTESDispatchMessageDataPrepareSpecificKey;

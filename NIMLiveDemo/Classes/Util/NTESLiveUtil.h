@@ -39,4 +39,6 @@
 
 + (NTESFilterType)changeToLiveType:(NSInteger)index;
 
++ (NSString *)currentTimeStr;
+
 @end

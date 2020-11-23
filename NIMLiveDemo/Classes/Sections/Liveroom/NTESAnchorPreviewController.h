@@ -7,7 +7,10 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "NTESLiveUtil.h"
 
 @interface NTESAnchorPreviewController : UIViewController
+
+- (instancetype)initWithBypassType:(NTESBypassType)bypassType;
 
 @end

@@ -18,6 +18,7 @@
 #import "NTESMicAttachment.h"
 #import "NTESPKAttachment.h"
 #import "NTESPKInfo.h"
+#import "NTESRoomBypassAttachment.h"
 
 @implementation NTESSessionMsgConverter
 
@@ -72,6 +73,7 @@
     attachment.nick            = connector.nick;
     attachment.avatar          = connector.avatar;
     attachment.connectorId     = connector.uid;
+    attachment.meetingUid      = connector.meetingUid;
     object.attachment          = attachment;
     message.messageObject      = object;
     return message;
@@ -110,10 +112,27 @@
     return message;
 }
 
++ (NIMMessage *)msgWithAnchorJoined
+{
+    NIMMessage *message        = [[NIMMessage alloc] init];
+    NIMCustomObject *object    = [[NIMCustomObject alloc] init];
+    NTESRoomBypassJoinAttachment *attachment = [[NTESRoomBypassJoinAttachment alloc] init];
+    object.attachment          = attachment;
+    message.messageObject      = object;
+    return message;
+}
+
++ (NIMMessage *)msgWithAnchorLeft
+{
+    NIMMessage *message        = [[NIMMessage alloc] init];
+    NIMCustomObject *object    = [[NIMCustomObject alloc] init];
+    NTESRoomBypassleaveAttachment *attachment = [[NTESRoomBypassleaveAttachment alloc] init];
+    object.attachment          = attachment;
+    message.messageObject      = object;
+    return message;
+}
 
 @end
-
-
 
 @implementation NTESSessionCustomNotificationConverter
 
@@ -127,7 +146,7 @@
                                     @"info"   : @{
                                             @"nick"   : member.roomNickname ? : @"",
                                             @"avatar" : member.roomAvatar.length? member.roomAvatar : @"avatar_default"
-                                            }
+                                            },
             } ;
 
     return contentDic;
@@ -201,6 +220,20 @@
     return nil;
 }
 
++ (NIMCustomSystemNotification *)notificationWithPkRoomBypassOnlineRequest:(NSString *)roomId  {
+    NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:roomId];
+    NIMNetCallMediaType type =  (NIMNetCallMediaType)[NTESLiveManager sharedInstance].type;
+    if (member) {
+        NSDictionary *contentDic = [self contentWithRoomId:roomId style:type command:NTESLiveCustomNotificationTypePkRoomByapssOnlineRequest];
+        NSString *content = [contentDic jsonBody];
+        NIMCustomSystemNotification *notification = [[NIMCustomSystemNotification alloc] initWithContent:content];
+        notification.sendToOnlineUsersOnly = YES;
+        return notification;
+    }
+    return nil;
+}
+
+
 + (NIMCustomSystemNotification *)notificationWithPkOnlineResponse:(NSString *)roomId {
     NIMChatroomMember *member = [[NTESLiveManager sharedInstance] myInfo:roomId];
     NIMNetCallMediaType type =  (NIMNetCallMediaType)[NTESLiveManager sharedInstance].type;
@@ -214,10 +247,21 @@
     return nil;
 }
 
-+ (NIMCustomSystemNotification *)notificationWithPkRequest:(NSString *)roomId {
++ (NIMCustomSystemNotification *)notificationWithPkRequest:(NSString *)roomId pushUrl:(NSString *)pushUrl layoutParam:(NSString *)layoutParam{
     NIMNetCallMediaType type =  (NIMNetCallMediaType)[NTESLiveManager sharedInstance].type;
-    NSDictionary *contentDic = [self contentWithRoomId:roomId style:type command:NTESLiveCustomNotificationTypePkRequest];
+    NSMutableDictionary *contentDic = [[self contentWithRoomId:roomId style:type command:NTESLiveCustomNotificationTypePkRequest] mutableCopy];
+    NSMutableDictionary *contentInfoDic = [[contentDic objectForKey:@"info"]mutableCopy];
+    
+    if (pushUrl) {
+        [contentInfoDic setObject:pushUrl forKey:@"push_url"];
+    }
+    if (layoutParam) {
+        [contentInfoDic setObject:layoutParam forKey:@"layout_param"];
+    }
+    [contentDic setObject:contentInfoDic forKey:@"info"];
+    
     NSString *content = [contentDic jsonBody];
+
     NIMCustomSystemNotification *notification = [[NIMCustomSystemNotification alloc] initWithContent:content];
     notification.sendToOnlineUsersOnly = YES;
     return notification;

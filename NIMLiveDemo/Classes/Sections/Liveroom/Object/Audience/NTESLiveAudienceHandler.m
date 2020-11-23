@@ -74,6 +74,7 @@
         connector.nick   = attach.nick;
         connector.avatar = attach.avatar;
         connector.type   = attach.type;
+        connector.meetingUid = attach.meetingUid;
         [[NTESLiveManager sharedInstance] addConnectorOnMic:connector];
         [self callUpdateUserOnMicWithUid:onMicUid];
     }
@@ -196,7 +197,6 @@
                         if ([dict isKindOfClass:[NSDictionary class]]){
                             if ([self.delegate respondsToSelector:@selector(didUpdateLiveType:)]) {
                                 NTESLiveType type = [dict jsonInteger:NTESCMType];
-
                                 [self.delegate didUpdateLiveType:type];
 
                             }
@@ -207,6 +207,11 @@
                             }
                             NSString *meetingName = [dict jsonString:NTESCMMeetingName];
                             self.meetingName = meetingName;
+                            
+                            if ([self.delegate respondsToSelector:@selector(didUpdateLiveBypassType:)]) {
+                                NTESBypassType type = [dict jsonInteger:NTESCMPushType] == 1 ? NTESBypassTypeAnchor:NTESBypassTypeRoom;
+                                [self.delegate didUpdateLiveBypassType:type];
+                            }
                         }
                     }
                     break;
@@ -216,7 +221,7 @@
                     DDLogInfo(@"update info: %@",content.notifyExt);
                     NSDictionary *dict = [content.notifyExt jsonObject];
                     if ([dict isKindOfClass:[NSDictionary class]]){
-                        if ([[dict allKeys] containsObject:NTESCMPKState]) {
+                        if (dict[NTESCMPKState]) {
                             if ([self.delegate respondsToSelector:@selector(didUpdateToastWithPkInfo:)]) {
                                 NTESPKInfo *info = [[NTESPKInfo alloc] init];
                                 info.isPking = [dict jsonInteger:NTESCMPKState];
@@ -224,14 +229,19 @@
                                 info.invitee = [dict jsonString:NTESCMPKStartedInvitee];
                                 [self.delegate didUpdateToastWithPkInfo:info];
                             }
-                            return;
                         }
-                        if ([self.delegate respondsToSelector:@selector(didUpdateLiveType:)]) {
-                            NTESLiveType type = [dict jsonInteger:NTESCMType];
-                            [self.delegate didUpdateLiveType:type];
+                        
+                        if (dict[NTESCMType]) {
+                            if ([self.delegate respondsToSelector:@selector(didUpdateLiveType:)]) {
+                                NTESLiveType type = [dict jsonInteger:NTESCMType];
+                                [self.delegate didUpdateLiveType:type];
+                            }
                         }
-                        NSString *meetingName = [dict jsonString:NTESCMMeetingName];
-                        self.meetingName = meetingName;
+                        
+                        if (dict[NTESCMMeetingName]) {
+                            NSString *meetingName = [dict jsonString:NTESCMMeetingName];
+                            self.meetingName = meetingName;
+                        }
                     }
                     break;
                 }

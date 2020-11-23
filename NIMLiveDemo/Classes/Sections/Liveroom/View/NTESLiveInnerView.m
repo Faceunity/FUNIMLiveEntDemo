@@ -37,6 +37,7 @@
 
 @property (nonatomic, strong) UIButton *startLiveButton;          //开始直播按钮
 @property (nonatomic, strong) UIButton *closeButton;              //关闭直播按钮
+@property (nonatomic, strong) UIButton *exitButton;              //主播离开房间按钮
 @property (nonatomic, strong) UIButton *cameraButton;             //相机反转按钮
 
 @property (nonatomic, copy)   NSString *roomId;                   //聊天室ID
@@ -50,12 +51,14 @@
 @property (nonatomic, strong) NTESLiveCoverView    *coverView;     //状态覆盖层
 
 @property (nonatomic, strong) NSMutableArray <NTESLiveBypassView *> *bypassViews;
-@property (nonatomic, strong) NTESGLView           *glView;        //接收YUV数据的视图
+@property (nonatomic, strong) UIView               *glViewContainer;        //接收YUV数据的视图
 @property (nonatomic, strong) NTESAnchorMicView    *micView;       //主播是音视频的时候的麦克风图
 @property (nonatomic, strong) NTESNickListView     *bypassNickList;  //互动直播昵称
 @property (nonatomic, strong) UILabel              *roomIdLabel;      //房间ID
 
 @property (nonatomic, strong) NTESNetStatusView    *netStatusView;    //网络状态视图
+@property (nonatomic, strong) UILabel              *anchorVolumeLab;     //主播音量
+@property (nonatomic, assign) uint64_t              anchorVolumeTime;
 
 @property (nonatomic, strong) NTESCameraZoomView   *cameraZoomView;
 
@@ -112,6 +115,11 @@
     [self.likeView fireLike];
 }
 
+- (void)updateExitButtonHidden:(BOOL)hidden
+{
+    [self.exitButton setHidden:hidden];
+}
+
 - (void)updateNetStatus:(NIMNetCallNetStatus)status
 {
     [self.netStatusView refresh:status];
@@ -134,29 +142,22 @@
     textView.placeholderAttributedText = [[NSAttributedString alloc] initWithString:placeHolder attributes:@{NSFontAttributeName:textView.font,NSForegroundColorAttributeName:[UIColor lightGrayColor]}];
 }
 
-- (void)updateRemoteView:(NSData *)yuvData
-                   width:(NSUInteger)width
-                  height:(NSUInteger)height
-                     uid:(NSString *)uid
-{
-//    NTESLiveBypassView *bypassView = [self bypassViewWithUid:uid];
-//    [bypassView updateRemoteView:yuvData width:width height:height];
+- (void)addRemoteView:(UIView *)view
+                  uid:(NSString *)uid {
     
     if ([NTESLiveManager sharedInstance].role == NTESLiveRoleAnchor){
         NTESLiveBypassView *bypassView = [self bypassViewWithUid:uid];
-        [bypassView updateRemoteView:yuvData width:width height:height];
-        if (_lastRemoteViewSize.width != width || _lastRemoteViewSize.height != height) {
-            _lastRemoteViewSize = CGSizeMake(width, height);
-            [self setNeedsLayout];
-        }
+        [bypassView addRemoteView:view];
     }else{
         NIMChatroom *roomInfo = [[NTESLiveManager sharedInstance] roomInfo:self.roomId];
         if ([uid isEqualToString:roomInfo.creator]) {
-            [self.glView render:yuvData width:width height:height];
+            [self.glViewContainer.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+            view.frame = self.glViewContainer.bounds;
+            view.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin;
+            [_glViewContainer addSubview:view];
         } else {
             NTESLiveBypassView *bypassView = [self bypassViewWithUid:uid];
-            [bypassView updateRemoteView:yuvData width:width height:height];
-            [bypassView updateRemoteView:yuvData width:width height:height];
+            [bypassView addRemoteView:view];
         }
     }
 }
@@ -235,6 +236,15 @@
     }
 }
 
+- (void)onExit:(id)sender
+{
+    if ([NTESLiveManager sharedInstance].role == NTESLiveRoleAnchor) {
+        if ([self.delegate respondsToSelector:@selector(onExitRoom)]) {
+            [self.delegate onExitRoom];
+        }
+    }
+}
+
 #pragma mark - Notification
 
 - (void)keyboardWillShow:(NSNotification *)notification
@@ -283,15 +293,19 @@
     self.roomIdLabel.top = self.infoView.bottom + 10.f;
     self.roomIdLabel.left = 10.f;
     self.roomIdLabel.width = [self getRoomIdLabelWidth];
+    self.anchorVolumeLab.frame = CGRectMake(_roomIdLabel.left,
+                                         _roomIdLabel.bottom + 16.0,
+                                         _roomIdLabel.width,
+                                         _roomIdLabel.height);
     
     self.likeView.bottom = self.actionView.top;
     self.likeView.right  = self.width - 10.f;
 
-    self.glView.size = self.size;
+    self.glViewContainer.size = self.size;
     
     self.bypassNickList.frame = CGRectMake(_roomIdLabel.right + padding,
                                            _infoView.top,
-                                           _closeButton.left - padding*2 - _infoView.right,
+                                           _exitButton.left - padding*2 - _infoView.right,
                                            _bypassNickList.estimationHeight);
     self.netStatusView.centerX = self.width * .5f;
     self.netStatusView.top = 70.f;
@@ -343,7 +357,7 @@
 
 #pragma mark - NTESLiveActionViewDelegate
 
-- (void)onActionType:(NTESLiveActionType)type sender:(id)sender
+- (void)     onActionType:(NTESLiveActionType)type sender:(id)sender
 {
     switch (type) {
         case NTESLiveActionTypeLike:
@@ -453,6 +467,7 @@
     {
         self.startLiveButton.hidden = NO;
         self.roomIdLabel.hidden = YES;
+        self.anchorVolumeLab.hidden = YES;
         [self.startLiveButton setTitle:@"开始直播" forState:UIControlStateNormal];
     }
     
@@ -462,6 +477,23 @@
     [self updateUserOnMic];
 }
 
+
+- (void)switchToAudioTypeExitView
+{
+    self.micView.hidden = YES;
+    self.exitButton.hidden = YES;
+    self.infoView.hidden = YES;
+    self.likeView.hidden = YES;
+    self.chatView.hidden = YES;
+    self.presentView.hidden = YES;
+    self.actionView.hidden  = YES;
+    self.cameraButton.hidden = YES;
+    self.roomIdLabel.hidden = YES;
+    self.anchorVolumeLab.hidden = YES;
+    self.netStatusView.hidden = YES;
+
+    [self switchToWaitingUI];
+}
 
 - (void)switchToPlayingUI
 {
@@ -487,12 +519,13 @@
     self.actionView.hidden  = NO;
     self.cameraButton.hidden = NO;
     self.roomIdLabel.hidden = NO;
+    self.anchorVolumeLab.hidden = NO;
     self.netStatusView.hidden = [NTESLiveManager sharedInstance].role == NTESLiveRoleAudience;
 
     //更新bypass view
     [self refreshBypassUI];
 
-    self.glView.hidden = YES;
+    self.glViewContainer.hidden = YES;
     if ([NTESLiveManager sharedInstance].role == NTESLiveRoleAudience
         || [NTESLiveManager sharedInstance].type == NIMNetCallMediaTypeAudio) {
         [self.actionView setActionType:NTESLiveActionTypeCamera disable:YES];
@@ -501,9 +534,30 @@
     }
     self.actionView.userInteractionEnabled = YES;
     [self.actionView setActionType:NTESLiveActionTypeInteract disable:NO];
-    [_closeButton setImage:[UIImage imageNamed:@"icon_close_p"] forState:UIControlStateNormal];
-    [_closeButton setImage:[UIImage imageNamed:@"icon_close_n"] forState:UIControlStateHighlighted];
 }
+
+- (void)switchToAnchorReenterView:(NTESMicConnector *)connector
+{
+    NSLog(@"YAT switchToAnchorReenterView %@",connector.uid);
+    if (_localDisplayView.superview == self) {
+        [_localDisplayView removeFromSuperview];
+    }
+    [self switchToBypassingUI:connector];
+}
+
+- (void)switchToAudienceBigViewUI
+{
+    self.glViewContainer.hidden = YES;
+    
+    NTESLiveBypassView *view = [self bypassViewWithUid:[[NIMSDK sharedSDK].loginManager currentAccount]];
+    [_bypassViews removeObject:view];
+    [view removeFromSuperview];
+    
+    //自己画面变成大画面
+    _localDisplayView.frame = CGRectMake(0, 0, self.frame.size.width, self.frame.size.height);
+    [self insertSubview:_localDisplayView atIndex:0];
+}
+
 
 - (void)switchToLinkingUI
 {
@@ -512,11 +566,10 @@
     self.closeButton.hidden = NO;
     self.cameraButton.hidden = YES;
     self.roomIdLabel.hidden = YES;
-
+    self.anchorVolumeLab.hidden = YES;
+    
     [self.coverView refreshWithChatroom:self.roomId status:NTESLiveCoverStatusLinking];
     self.coverView.hidden = NO;
-    [self.closeButton setImage:[UIImage imageNamed:@"icon_close_n"] forState:UIControlStateNormal];
-    [self.closeButton setImage:[UIImage imageNamed:@"icon_close_p"] forState:UIControlStateHighlighted];
 }
 
 - (void)switchToEndUI
@@ -525,6 +578,7 @@
     [self.coverView refreshWithChatroom:self.roomId status:NTESLiveCoverStatusFinished];
     self.coverView.hidden = NO;
     self.roomIdLabel.hidden = YES;
+    self.anchorVolumeLab.hidden = YES;
     if (_anchorPkToast) {
         [self removePkToast];
     }
@@ -535,8 +589,6 @@
     }else{
         self.closeButton.hidden = NO;
         self.cameraButton.hidden = YES;
-        [self.closeButton setImage:[UIImage imageNamed:@"icon_close_n"] forState:UIControlStateNormal];
-        [self.closeButton setImage:[UIImage imageNamed:@"icon_close_p"] forState:UIControlStateHighlighted];
     }
 }
 
@@ -615,8 +667,9 @@
 
 
 - (void)refreshBypassUIWithConnector:(NTESMicConnector *)connector {
+    NSLog(@"YAT refreshBypassUIWithConnector uid %@",connector.uid);
     [self refreshBypassUI];
-    
+
     NTESLiveBypassView *bypassView = [self bypassViewWithUid:connector.uid];
     NTESLiveBypassViewStatus status;
     if ([connector.uid isEqualToString:[[NIMSDK sharedSDK].loginManager currentAccount]]) {
@@ -629,13 +682,16 @@
 
 - (void)refreshBypassUI {
     
-    if ([_delegate isPlayerPlaying]) {
+    if ([_delegate isPlayerPlaying] && ![_delegate isAudioMode]) {
+        NSLog(@"YAT isPlayerPlaying");
         [_bypassViews enumerateObjectsUsingBlock:^(NTESLiveBypassView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             [obj removeFromSuperview];
         }];
         [_bypassViews removeAllObjects];
         return;
     } else {
+        NSLog(@"YAT refrash connectorsOnMic");
+
         __block NSMutableIndexSet *delIndex = [NSMutableIndexSet indexSet];
         NSMutableArray *connectorsOnMic = [NTESLiveManager sharedInstance].connectorsOnMic;
         __weak typeof(self) weakSelf = self;
@@ -680,6 +736,7 @@
     self.netStatusView.hidden = NO;
     self.cameraButton.hidden = NO;
     self.roomIdLabel.hidden = NO;
+    self.anchorVolumeLab.hidden = NO;
 
     NTESLiveBypassViewStatus status = connector.type == NIMNetCallMediaTypeAudio? NTESLiveBypassViewStatusStreamingAudio: NTESLiveBypassViewStatusStreamingVideo;
     
@@ -688,10 +745,8 @@
     [bypassView refresh:connector status:status];
     
     //[self.bypassView refresh:connector status:status];
-    self.glView.hidden = YES;
+    self.glViewContainer.hidden = YES;
     [self updateUserOnMic];
-    [_closeButton setImage:[UIImage imageNamed:@"icon_close_p"] forState:UIControlStateNormal];
-    [_closeButton setImage:[UIImage imageNamed:@"icon_close_n"] forState:UIControlStateHighlighted];
 }
 
 - (void)switchToBypassingUI:(NTESMicConnector *)connector
@@ -706,16 +761,15 @@
     self.textInputView.hidden = NO;
     self.netStatusView.hidden = YES;
     self.roomIdLabel.hidden = NO;
-
+    self.anchorVolumeLab.hidden = NO;
+    
     [self refreshBypassUIWithConnector:connector];
     //[self.bypassView refresh:connector status:status];
-    self.glView.hidden = NO;
+    self.glViewContainer.hidden = NO;
     [self.actionView setActionType:NTESLiveActionTypeCamera disable: [NTESLiveManager sharedInstance].bypassType == NIMNetCallMediaTypeAudio];
     [self.actionView setActionType:NTESLiveActionTypeBeautify disable:[NTESLiveManager sharedInstance].bypassType == NIMNetCallMediaTypeAudio];
     [self.actionView setActionType:NTESLiveActionTypeInteract disable:YES];
     [self updateUserOnMic];
-    [_closeButton setImage:[UIImage imageNamed:@"icon_close_p"] forState:UIControlStateNormal];
-    [_closeButton setImage:[UIImage imageNamed:@"icon_close_n"] forState:UIControlStateHighlighted];
 }
 
 - (void)switchToBypassLoadingUI:(NTESMicConnector *)connector
@@ -746,6 +800,19 @@
     }
 }
 
+- (void)updateAnchorVolume:(UInt16)volume {
+    uint64_t curTime = [[NSDate date] timeIntervalSince1970]*1000;
+    if (curTime - _anchorVolumeTime > 1000) {
+        _anchorVolumeLab.text = [NSString stringWithFormat:@"音量：%d", volume];
+        _anchorVolumeTime = curTime;
+    }
+}
+
+- (void)updateUserVolume:(UInt16)volume uid:(NSString *)uid {
+    NTESLiveBypassView *view = [self bypassViewWithUid:uid];
+    view.volume = volume;
+}
+
 //- (void)switchToBypassExitConfirmUI
 //{
 //    DDLogInfo(@"switch to bypass exit confirm UI");
@@ -757,7 +824,7 @@
 - (void)setup
 {
     [self addSubview:self.startLiveButton];
-    [self addSubview:self.glView];
+    [self addSubview:self.glViewContainer];
     [self addSubview:self.micView];
     [self addSubview:self.bypassNickList];
     [self addSubview:self.likeView];
@@ -768,9 +835,11 @@
     [self addSubview:self.textInputView];
     [self addSubview:self.coverView];
     [self addSubview:self.closeButton];
+    [self addSubview:self.exitButton];
     [self addSubview:self.netStatusView];
     [self addSubview:self.roomIdLabel];
     [self addSubview:self.cameraZoomView];
+    [self addSubview:self.anchorVolumeLab];
     [self adjustViewPosition];
     
     
@@ -968,16 +1037,39 @@
     if(!_closeButton)
     {
         _closeButton = [UIButton buttonWithType:UIButtonTypeCustom];
-        [_closeButton setImage:[UIImage imageNamed:@"icon_close_n"] forState:UIControlStateNormal];
-        [_closeButton setImage:[UIImage imageNamed:@"icon_close_p"] forState:UIControlStateHighlighted];
         [_closeButton addTarget:self action:@selector(onClose:) forControlEvents:UIControlEventTouchUpInside];
         _closeButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
-        _closeButton.size = CGSizeMake(44, 44);
+        [_closeButton setTitle:@"结束" forState:UIControlStateNormal];
+        [_closeButton setBackgroundColor:[UIColor redColor]];
+        _closeButton.size = CGSizeMake(44, 30);
         _closeButton.top = 5.f;
         _closeButton.right = self.width - 5.f;
+        _closeButton.layer.masksToBounds = YES;
+        _closeButton.layer.cornerRadius = 5;
     }
     return _closeButton;
 }
+
+- (UIButton *)exitButton
+{
+    if(!_exitButton)
+    {
+        _exitButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        [_exitButton addTarget:self action:@selector(onExit:) forControlEvents:UIControlEventTouchUpInside];
+        _exitButton.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleBottomMargin;
+        [_exitButton setTitle:@"离开" forState:UIControlStateNormal];
+        [_exitButton setBackgroundColor:[UIColor blueColor]];
+        _exitButton.size = CGSizeMake(44, 30);
+        _exitButton.top = 5.f;
+        _exitButton.right = self.closeButton.left - 5.f;
+        _exitButton.hidden = YES;
+        _exitButton.layer.masksToBounds = YES;
+        _exitButton.layer.cornerRadius = 5;
+    }
+    return _exitButton;
+}
+
+
 
 - (UIButton *)cameraButton
 {
@@ -996,14 +1088,13 @@
     return _cameraButton;
 }
 
-- (NTESGLView *)glView
-{
-    if (!_glView) {
-        _glView = [[NTESGLView alloc] initWithFrame:self.bounds];
-        _glView.contentMode = UIViewContentModeScaleAspectFill;
-        _glView.hidden = YES;
+- (UIView *)glViewContainer {
+    if (!_glViewContainer) {
+        _glViewContainer = [[NTESGLView alloc] initWithFrame:self.bounds];
+        _glViewContainer.contentMode = UIViewContentModeScaleAspectFill;
+        _glViewContainer.hidden = YES;
     }
-    return _glView;
+    return _glViewContainer;
 }
 
 - (NTESAnchorMicView *)micView
@@ -1066,10 +1157,21 @@
     return _netStatusView;
 }
 
+- (UILabel *)anchorVolumeLab {
+    if (!_anchorVolumeLab) {
+        _anchorVolumeLab = [[UILabel alloc] init];
+        _anchorVolumeLab.font = [UIFont systemFontOfSize:13.f];
+        _anchorVolumeLab.backgroundColor = [UIColor clearColor];
+        _anchorVolumeLab.textColor = UIColorFromRGB(0xffffff);
+    }
+    return _anchorVolumeLab;
+}
+
 #pragma mark - 连麦视图
 //添加连麦视图
 - (NTESLiveBypassView *)addBypassViewWithConnector:(NTESMicConnector *)connector {
     
+    NSLog(@"YAT addBypassViewWithConnector %@",connector.uid);
     __block BOOL isAdd = YES;
     __block NTESLiveBypassView *ret = nil;
     [_bypassViews enumerateObjectsUsingBlock:^(NTESLiveBypassView * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
@@ -1081,6 +1183,7 @@
     }];
     
     if (isAdd) {
+        NSLog(@"YAT really addBypassViewWithConnector %@",connector.uid);
         NTESLiveBypassView *bypassView = [[NTESLiveBypassView alloc] initWithFrame:CGRectZero];
         bypassView.isAnchor = _isAnchor;
         bypassView.uid = connector.uid;

@@ -22,9 +22,9 @@
 NTES_USE_CLEAR_BAR
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [self resetTextField:self.accountTextfield];
-    [self resetTextField:self.nicknameTextfield];
-    [self resetTextField:self.passwordTextfield];
+    [self resetTextField:self.accountTextfield placeholder:@"帐号：限20位字母或者数字"];
+    [self resetTextField:self.nicknameTextfield placeholder:@"昵称：限10位汉字、字母或者数字"];
+    [self resetTextField:self.passwordTextfield placeholder:@"密码：6~20位字母或者数字"];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillChangeFrame:) name:UIKeyboardWillChangeFrameNotification object:nil];
 }
 
@@ -161,14 +161,14 @@ NTES_USE_CLEAR_BAR
 }
 
 #pragma mark - Private
-- (void)resetTextField:(UITextField *)textField{
+- (void)resetTextField:(UITextField *)textField  placeholder:(NSString *)placeholder {
     textField.tintColor = [UIColor whiteColor];
-//    [textField setValue:UIColorFromRGBA(0xffffff, .6f) forKeyPath:@"_placeholderLabel.textColor"];
+    NSDictionary *attrs = @{NSForegroundColorAttributeName: UIColorFromRGBA(0xffffff, .6f)};
+    textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:placeholder attributes:attrs];
     textField.tintColor = [UIColor whiteColor];
     UIButton *clearButton = [textField valueForKey:@"_clearButton"];
     [clearButton setImage:[UIImage imageNamed:@"login_icon_clear"] forState:UIControlStateNormal];
 }
-
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
     [super touchesBegan:touches withEvent:event];

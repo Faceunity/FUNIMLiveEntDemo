@@ -20,6 +20,7 @@
 #import "UIView+NTES.h"
 #import "UIImageView+WebCache.h"
 #import "UIImage+GIF.h"
+#import "NTESBypassTypeSelectViewController.h"
 
 #define DetectResultNotification @"detectResult"
 
@@ -104,7 +105,8 @@ NTES_USE_CLEAR_BAR
     UIViewController *vc;
     if (role == NTESLiveRoleAnchor)
     {
-        vc = [[NTESLiveTypeSelectViewController alloc] initWithNibName:nil bundle:nil];
+        
+        vc = [[NTESBypassTypeSelectViewController alloc] initWithNibName:nil bundle:nil];
     }
     else
     {
@@ -174,8 +176,20 @@ NTES_USE_CLEAR_BAR
         __strong typeof(weakSelf) strongSelf = weakSelf;
         if (error == nil && urlString)
         {
-            [UIPasteboard generalPasteboard].string = urlString;
-            [strongSelf.view makeToast:@"上传日志成功,URL已复制到剪切板中" duration:3.0 position:CSToastPositionCenter];
+            [[NIMSDK sharedSDK].resourceManager fetchNOSURLWithURL:urlString
+                                                        completion:^(NSError * error, NSString * realString)
+            {
+                if (error == nil && realString)
+                {
+                    [UIPasteboard generalPasteboard].string = realString;
+                    [strongSelf.view makeToast:@"上传日志成功,URL已复制到剪切板中" duration:3.0 position:CSToastPositionCenter];
+                }
+                else
+                {
+                    [strongSelf.view makeToast:@"上传日志失败" duration:3.0 position:CSToastPositionCenter];
+                }
+            }];
+            
         }
         else
         {

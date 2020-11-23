@@ -16,14 +16,27 @@
 #import "NTESCustomKeyDefine.h"
 #import "NTESAnchorPreviewController.h"
 #import "NTESLiveUtil.h"
+#import "NTESBypassLiveViewController.h"
+#import "NTESRoomBypassLiveViewController.h"
+
 
 @interface NTESLiveTypeSelectViewController ()
+
+@property (nonatomic, assign)NTESBypassType bypassType;
 
 @end
 
 @implementation NTESLiveTypeSelectViewController
 
 NTES_USE_CLEAR_BAR
+
+- (instancetype)initWithBypassType:(NTESBypassType)bypassType
+{
+    if (self = [super init]) {
+        _bypassType = bypassType;
+    }
+    return self;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -47,8 +60,12 @@ NTES_USE_CLEAR_BAR
 
 - (void)startVideoPreview
 {
-    NTESAnchorPreviewController *vc = [[NTESAnchorPreviewController alloc]init];
-    [self.navigationController presentViewController:vc animated:YES completion:nil];
+    NTESAnchorPreviewController *vc = [[NTESAnchorPreviewController alloc]initWithBypassType:_bypassType];
+    vc.modalPresentationStyle =  UIModalPresentationFullScreen;
+    UINavigationController *nav = self.navigationController;
+    [nav presentViewController:vc animated:YES completion:^{
+        }
+    ];
 }
 
 - (void)requestLiveRoom
@@ -78,10 +95,18 @@ NTES_USE_CLEAR_BAR
                     [[NTESLiveManager sharedInstance] cacheMyInfo:me roomId:request.roomId];
                     [[NTESLiveManager sharedInstance] cacheChatroom:chatroom];
                     
-                    NTESAnchorLiveViewController *vc = [[NTESAnchorLiveViewController alloc]initWithChatroom:chatroom];
-
-                    [wself.navigationController presentViewController:vc animated:YES completion:nil];
                     
+                    NTESBypassLiveViewController *vc;
+                    if (_bypassType == NTESBypassTypeRoom) {
+                        vc= [[NTESRoomBypassLiveViewController alloc]initWithChatroom:chatroom];
+                    }
+                    else
+                    {
+                         vc = [[NTESAnchorLiveViewController alloc]initWithChatroom:chatroom];
+                    }
+                    vc.modalPresentationStyle = UIModalPresentationFullScreen;
+                    [wself.navigationController presentViewController:vc animated:YES completion:nil];
+
                 }
                 else
                 {

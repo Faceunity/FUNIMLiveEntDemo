@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Bucket
-   uuid = "3955BA1B-818D-4CB9-BC09-97AEE8619A2C"
+   uuid = "15B5BC1A-D20D-4F26-88D9-B528FC1169FF"
    type = "0"
    version = "2.0">
    <Breakpoints>
       <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.ExceptionBreakpoint">
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "C9E652DF-60FF-490D-ADF2-B27920EA1E08"
+            uuid = "C6FFC6A7-28B6-4849-99DA-64500D819DAE"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            scope = "1"
-            stopOnStyle = "0">
+            filePath = "NIMLiveDemo/Classes/Sections/Liveroom/NTESAnchorLiveViewController.m"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "454"
+            endingLineNumber = "454"
+            landmarkName = "-onCameraOrientationSwitchCompleted:"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

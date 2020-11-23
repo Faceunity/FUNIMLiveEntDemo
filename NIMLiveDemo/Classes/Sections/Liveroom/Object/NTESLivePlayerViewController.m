@@ -11,6 +11,7 @@
 #import "NTESBundleSetting.h"
 #import "NTESLiveManager.h"
 #import "UIView+NTES.h"
+#import "NTESAudioInfo.h"
 
 ///播放器第一帧视频显示时的消息通知
 NSString *const NTESLivePlayerFirstVideoDisplayedNotification = @"NELivePlayerFirstVideoDisplayedNotification";
@@ -312,7 +313,6 @@ NSString *const NTESLivePlayerPlaybackStateChangedNotification = @"NELivePlayerP
 - (NELivePlayerController *)makePlayer:(NSString *)streamUrl
 {
     NELivePlayerController *player;
-    [NELivePlayerController setLogLevel:NELP_LOG_DEFAULT];
     NSURL *url = [NSURL URLWithString:streamUrl];
     player = [[NELivePlayerController alloc] initWithContentURL:url error:nil];
     DDLogInfo(@"live player start version %@",[NELivePlayerController getSDKVersion]);
@@ -321,6 +321,13 @@ NSString *const NTESLivePlayerPlaybackStateChangedNotification = @"NELivePlayerP
     [player setBufferStrategy:strategy];
     DDLogInfo(@"live player set buffer strategy %zd",strategy);
     [player setHardwareDecoder:NO];
+    [player setOpenReceiveSyncData:YES];
+    
+    __weak typeof(self) weakSelf = self;
+    [player registerSyncContentCB:^(NELivePlayerSyncContent *content) {
+        //DDLogInfo(@"%@", content);
+        [weakSelf didProcessSyncContent:content];
+    }];
     
     if (!player) {
         [self retry:5];
@@ -328,6 +335,16 @@ NSString *const NTESLivePlayerPlaybackStateChangedNotification = @"NELivePlayerP
     return player;
 }
 
+- (void)didProcessSyncContent:(NELivePlayerSyncContent *)content {
+    for (NSString *jsonStr in content.contents) {
+        NTESAudioInfo *info = [[NTESAudioInfo alloc] initWithJsonString:jsonStr];
+        for (NTESAudioNodeInfo *obj in info.nodesInfo) {
+            [self didUpdateVolume:obj.energy meetingUid:[obj.uid longLongValue]];
+        }
+    }
+}
+
+- (void)didUpdateVolume:(UInt16)volume meetingUid:(UInt64)meetingUid {}
 
 - (void)setScalingMode:(NELPMovieScalingMode)aScalingMode
 {

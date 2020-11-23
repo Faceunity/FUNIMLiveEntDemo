@@ -7,7 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "NTESLiveViewDefine.h"
 
 @interface NTESLiveTypeSelectViewController : UIViewController
+
+- (instancetype)initWithBypassType:(NTESBypassType)bypassType;
 
 @end

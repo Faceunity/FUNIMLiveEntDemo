@@ -13,6 +13,8 @@
 
 @property (nonatomic,assign) BOOL isLiveStream;
 
+@property (nonatomic,assign) BOOL canContinueLiveStream;
+
 @property (nonatomic,copy) NIMNetCallVideoSampleBufferHandler videoHandler;
 
 - (void)startVideoPreview:(NTESMediaCaptureRequest *)request

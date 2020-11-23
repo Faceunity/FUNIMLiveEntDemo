@@ -21,6 +21,8 @@
 
 @property (nonatomic,copy)   NSString *nick;
 
+@property (nonatomic,assign) UInt64 meetingUid;
+
 @property (nonatomic,assign) BOOL isSelected;
 
 - (instancetype)initWithDictionary:(NSDictionary *)dict;

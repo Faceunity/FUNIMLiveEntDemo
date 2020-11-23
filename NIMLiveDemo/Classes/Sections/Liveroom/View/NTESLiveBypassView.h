@@ -33,14 +33,13 @@ typedef NS_ENUM(NSInteger, NTESLiveBypassViewStatus){
 
 @property (nonatomic, copy) NSString *uid;
 
+@property (nonatomic, assign) UInt16 volume;
+
 @property (nonatomic, weak) id<NTESLiveBypassViewDelegate> delegate;
 
 @property (nonatomic, strong) UIView *localVideoDisplayView;
 
 - (void)refresh:(NTESMicConnector *)connector status:(NTESLiveBypassViewStatus)status;
 
-- (void)updateRemoteView:(NSData *)yuvData
-                   width:(NSUInteger)width
-                  height:(NSUInteger)height;
-
+- (void)addRemoteView:(UIView *)remoteView;
 @end
