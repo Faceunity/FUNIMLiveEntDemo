@@ -46,10 +46,7 @@
 #import "NTESAnchorPKView.h"
 
 /* faceU */
-#import "FUAPIDemoBar.h"
-#import "FUManager.h"
-
-#import "FUTestRecorder.h"
+#import "FUDemoManager.h"
 
 
 #import "NTESFiterStatusModel.h"
@@ -58,7 +55,7 @@ typedef void(^NTESDisconnectAckHandler)(NSError *);
 typedef void(^NTESAgreeMicHandler)(NSError *);
 
 @interface NTESAnchorLiveViewController ()<NIMChatroomManagerDelegate,NTESLiveInnerViewDelegate,NTESLiveAnchorHandlerDelegate,
-NIMChatManagerDelegate,NIMSystemNotificationManagerDelegate,NIMNetCallManagerDelegate,NTESConnectQueueViewDelegate,NTESTimerHolderDelegate,NTESMixAudioSettingViewDelegate,NTESMenuViewProtocol,NTESVideoQualityViewDelegate,NTESMirrorViewDelegate,NTESWaterMarkViewDelegate, NTESAlertSheetViewDelegate,NTESAnchorPKViewDelegate,FUAPIDemoBarDelegate>
+NIMChatManagerDelegate,NIMSystemNotificationManagerDelegate,NIMNetCallManagerDelegate,NTESConnectQueueViewDelegate,NTESTimerHolderDelegate,NTESMixAudioSettingViewDelegate,NTESMenuViewProtocol,NTESVideoQualityViewDelegate,NTESMirrorViewDelegate,NTESWaterMarkViewDelegate, NTESAlertSheetViewDelegate,NTESAnchorPKViewDelegate,FUManagerProtocol>
 {
     NTESTimerHolder *_timer;
     NTESDisconnectAckHandler _ackHandler;
@@ -113,9 +110,8 @@ NIMChatManagerDelegate,NIMSystemNotificationManagerDelegate,NIMNetCallManagerDel
 @property (nonatomic, assign) BOOL isSwitchOriginMeeting;
 
 @property (nonatomic, strong) NSString *roomName;
+@property(nonatomic, strong) FUDemoManager *demoManager;
 
-/**faceU */
-@property(nonatomic,strong)FUAPIDemoBar *demoBar;
 
 @end
 
@@ -156,11 +152,15 @@ NTES_FORBID_INTERACTIVE_POP
 
 - (void)dealloc{
     
-    [[FUManager shareManager] destoryItems];
     [[NIMSDK sharedSDK].chatroomManager removeDelegate:self];
     [[NIMSDK sharedSDK].chatManager removeDelegate:self];
     [UIApplication sharedApplication].idleTimerDisabled = NO;
     [[NTESLiveManager sharedInstance] stop];
+    
+    if (self.isuseFU) {
+        
+        [[FUManager shareManager] destoryItems];
+    }
     
 }
 
@@ -171,34 +171,23 @@ NTES_FORBID_INTERACTIVE_POP
 
     [self setUp];
     
-    [[FUTestRecorder shareRecorder] setupRecord];
-    
-    /* faceU */
-    [[FUManager shareManager] loadFilter];
-    [FUManager shareManager].isRender = YES;
-    [FUManager shareManager].flipx = NO;
-    [FUManager shareManager].trackFlipx = NO;
-    [self.innerView addSubview:self.demoBar];
-    
-    
     DDLogInfo(@"enter live room , live room type %d, current user: %@",
               (int)[NTESLiveManager sharedInstance].type,[[NIMSDK sharedSDK].loginManager currentAccount]);
     //视频直播
     if (_isVideoLiving) {
         
-        self.demoBar.hidden = NO;
         [NTESLiveManager sharedInstance].type = NTESLiveTypeVideo;
         [_capture switchContainerToView:self.captureView];
         [self.innerView switchToPlayingUI];
         [self.view addSubview:self.innerView];
+       
         [self.innerView updateBeautify:self.filterModel.filterIndex];
         [self.innerView updateQualityButton:[NTESLiveManager sharedInstance].liveQuality == NTESLiveQualityHigh];
     }
     //语音直播
     else
     {
-        
-        self.demoBar.hidden = YES;
+
         [self.innerView switchToWaitingUI];
         [self.view addSubview:self.innerView];
         __weak typeof(self) wself = self;
@@ -232,6 +221,17 @@ NTES_FORBID_INTERACTIVE_POP
                                     }
                                 }];
     }
+    
+    if (self.isuseFU) {
+        
+        // FaceUnity UI
+        CGFloat safeAreaBottom = 0;
+        if (@available(iOS 11.0, *)) {
+            safeAreaBottom = [UIApplication sharedApplication].delegate.window.safeAreaInsets.bottom;
+        }
+        self.demoManager = [[FUDemoManager alloc] initWithTargetController:self originY:CGRectGetHeight(self.view.frame) - FUBottomBarHeight - safeAreaBottom - 88];
+    }
+    
 }
 
 - (BOOL)prefersStatusBarHidden{
@@ -440,7 +440,7 @@ NTES_FORBID_INTERACTIVE_POP
 
 -(void)onCameraTypeSwitchCompleted:(NIMNetCallCamera)cameraType
 {
-    [FUManager shareManager].trackFlipx = ![FUManager shareManager].trackFlipx;
+    
     if (cameraType == NIMNetCallCameraBack) {
         // 镜像关闭
         [self.mirrorView setMirrorDisabled];
@@ -460,7 +460,6 @@ NTES_FORBID_INTERACTIVE_POP
         [self.innerView updateFocusButton:NO];
         self.focusView.hidden = YES;
         
-        [FUManager shareManager].flipx = NO;
     }
     
     [self.innerView resetZoomSlider];
@@ -540,7 +539,6 @@ NTES_FORBID_INTERACTIVE_POP
     [[NIMAVChatSDK sharedSDK].netCallManager addDelegate:self];
 }
 
-
 #pragma mark - NTESLiveInnerViewDelegate
 - (BOOL)isPlayerPlaying {
     return NO;
@@ -592,7 +590,12 @@ NTES_FORBID_INTERACTIVE_POP
         }
         case NTESLiveActionTypeCamera:
             [self.capture switchCamera];
-            [FUManager shareManager].flipx = ![FUManager shareManager].flipx;
+            if (self.isuseFU) {
+                
+                [[FUManager shareManager] onCameraChange];
+                [FUManager shareManager].flipx = ![FUManager shareManager].flipx;
+            }
+           
             break;
 
         case NTESLiveActionTypeInteract:{
@@ -2032,44 +2035,6 @@ NTES_FORBID_INTERACTIVE_POP
         return;
     }
 }
-
-#pragma  mark ----  faceU start  -----
-// demobar 初始化
--(FUAPIDemoBar *)demoBar{
-    if (!_demoBar) {
-        _demoBar = [[FUAPIDemoBar alloc] initWithFrame:CGRectMake(0, self.view.frame.size.height - 300, self.view.frame.size.width, 194)];
-        _demoBar.mDelegate = self;
-    }
-    return _demoBar ;
-}
-
-/**      FUAPIDemoBarDelegate       **/
-
--(void)filterValueChange:(FUBeautyParam *)param{
-    [[FUManager shareManager] filterValueChange:param];
-}
-
--(void)switchRenderState:(BOOL)state{
-    [FUManager shareManager].isRender = state;
-}
-
--(void)bottomDidChange:(int)index{
-    if (index < 3) {
-        [[FUManager shareManager] setRenderType:FUDataTypeBeautify];
-    }
-    if (index == 3) {
-        [[FUManager shareManager] setRenderType:FUDataTypeStrick];
-    }
-    
-    if (index == 4) {
-        [[FUManager shareManager] setRenderType:FUDataTypeMakeup];
-    }
-    if (index == 5) {
-        [[FUManager shareManager] setRenderType:FUDataTypebody];
-    }
-}
-
-#pragma  mark ----  faceU End  -----
 
 
 @end

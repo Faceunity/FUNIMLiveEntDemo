@@ -59,8 +59,6 @@ typedef void(^LiveStreamHandler)(NSError *error);
 
 - (void)processVideoSampleBuffer:(CMSampleBufferRef)sampleBuffer
 {
-
-    [[FUTestRecorder shareRecorder] processFrameWithLog];
     
     CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
     /* faceU */
@@ -100,7 +98,7 @@ typedef void(^LiveStreamHandler)(NSError *error);
             {
                 NIMNetCallVideoCaptureParam *param = [NTESUserUtil videoCaptureParam];
                 //初始化 自然模式
-                param.videoProcessorParam.filterType = NIMNetCallFilterTypeZiran;
+                param.videoProcessorParam.filterType = NIMNetCallFilterTypeNormal;
                 param.videoHandler = weakSelf.videoHandler;
                 [[NIMAVChatSDK sharedSDK].netCallManager startVideoCapture:param];
             }
@@ -196,6 +194,10 @@ typedef void(^LiveStreamHandler)(NSError *error);
         self.cameraType = NIMNetCallCameraFront;
     }
     [[NIMAVChatSDK sharedSDK].netCallManager switchCamera:self.cameraType];
+    
+    if ([FUManager shareManager].isRender) {
+        [[FUManager shareManager] onCameraChange];
+    }
 
 }
 

@@ -61,6 +61,10 @@
 
 @property (nonatomic, assign)BOOL exitFromLive; //从房间推流离开
 
+/// 是否使用FU
+@property(nonatomic, assign) BOOL isuseFU;
+
+
 @end
 
 @implementation NTESAnchorPreviewController
@@ -103,7 +107,25 @@
                     }
     }];
     
+    UILabel *fuLbl = [[UILabel alloc] initWithFrame:CGRectMake(10, 5, 64, 28)];
+    fuLbl.text = @"FU开关";
+    fuLbl.font = [UIFont systemFontOfSize:16];
+    fuLbl.textColor = [UIColor whiteColor];
+    UISwitch *fuswitch = [[UISwitch alloc] initWithFrame:CGRectMake(74, 5, 28, 28)];
+    [fuswitch addTarget:self action:@selector(selectedFUChanged:) forControlEvents:(UIControlEventValueChanged)];
+    [fuswitch setOn:YES];
+    self.isuseFU = YES;
+    [self.view addSubview:fuLbl];
+    [self.view addSubview:fuswitch];
+    
 }
+
+- (void)selectedFUChanged:(UISwitch *)sender{
+    
+    self.isuseFU = sender.isOn;
+    
+}
+
 
 - (void)viewDidDisappear:(BOOL)animated
 {
@@ -414,6 +436,11 @@
                         vc.filterModel = [weakSelf.previewInnerView getFilterModel];
 
                         vc.modalPresentationStyle =  UIModalPresentationFullScreen;
+                        
+                        if ([vc isKindOfClass:[NTESAnchorLiveViewController class]]) {
+
+                            vc.isuseFU = weakSelf.isuseFU;
+                        }
                         dispatch_after(0, dispatch_get_main_queue(), ^{
                             [weakSelf presentViewController:vc animated:NO completion:^{
                                 [weakSelf.previewInnerView switchToEndUI];
