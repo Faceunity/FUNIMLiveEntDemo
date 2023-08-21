@@ -55,7 +55,7 @@ typedef void(^NTESDisconnectAckHandler)(NSError *);
 typedef void(^NTESAgreeMicHandler)(NSError *);
 
 @interface NTESAnchorLiveViewController ()<NIMChatroomManagerDelegate,NTESLiveInnerViewDelegate,NTESLiveAnchorHandlerDelegate,
-NIMChatManagerDelegate,NIMSystemNotificationManagerDelegate,NIMNetCallManagerDelegate,NTESConnectQueueViewDelegate,NTESTimerHolderDelegate,NTESMixAudioSettingViewDelegate,NTESMenuViewProtocol,NTESVideoQualityViewDelegate,NTESMirrorViewDelegate,NTESWaterMarkViewDelegate, NTESAlertSheetViewDelegate,NTESAnchorPKViewDelegate,FUManagerProtocol>
+NIMChatManagerDelegate,NIMSystemNotificationManagerDelegate,NIMNetCallManagerDelegate,NTESConnectQueueViewDelegate,NTESTimerHolderDelegate,NTESMixAudioSettingViewDelegate,NTESMenuViewProtocol,NTESVideoQualityViewDelegate,NTESMirrorViewDelegate,NTESWaterMarkViewDelegate, NTESAlertSheetViewDelegate,NTESAnchorPKViewDelegate>
 {
     NTESTimerHolder *_timer;
     NTESDisconnectAckHandler _ackHandler;
@@ -159,7 +159,7 @@ NTES_FORBID_INTERACTIVE_POP
     
     if (self.isuseFU) {
         
-        [[FUManager shareManager] destoryItems];
+        [FUDemoManager destory];
     }
     
 }
@@ -223,13 +223,13 @@ NTES_FORBID_INTERACTIVE_POP
     }
     
     if (self.isuseFU) {
-        
+    
         // FaceUnity UI
-        CGFloat safeAreaBottom = 0;
-        if (@available(iOS 11.0, *)) {
-            safeAreaBottom = [UIApplication sharedApplication].delegate.window.safeAreaInsets.bottom;
-        }
-        self.demoManager = [[FUDemoManager alloc] initWithTargetController:self originY:CGRectGetHeight(self.view.frame) - FUBottomBarHeight - safeAreaBottom - 88];
+        [FUDemoManager setupFUSDK];
+        [FUDemoManager shared].isRender = YES;
+        [FUDemoManager shared].flipx = YES;
+        [[FUDemoManager shared] addDemoViewToView:self.view originY:CGRectGetHeight(self.view.frame) - FUBottomBarHeight - FUSafaAreaBottomInsets() - 88];
+        
     }
     
 }
@@ -592,8 +592,9 @@ NTES_FORBID_INTERACTIVE_POP
             [self.capture switchCamera];
             if (self.isuseFU) {
                 
-                [[FUManager shareManager] onCameraChange];
-                [FUManager shareManager].flipx = ![FUManager shareManager].flipx;
+                [FUDemoManager resetTrackedResult];
+                [FUDemoManager shared].flipx = ![FUDemoManager shared].flipx;
+
             }
            
             break;
