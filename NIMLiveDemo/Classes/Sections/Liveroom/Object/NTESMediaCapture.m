@@ -15,7 +15,7 @@
 #import "NTESLiveManager.h"
 
 /* faceU */
-#import "FUManager.h"
+#import "FUDemoManager.h"
 
 #import "FUTestRecorder.h"
 
@@ -62,8 +62,23 @@ typedef void(^LiveStreamHandler)(NSError *error);
     
     CVPixelBufferRef pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
     /* faceU */
-    [[FUManager shareManager] renderItemsToPixelBuffer:pixelBuffer];
-    
+    if([FUDemoManager shared].isRender){
+        
+        [[FUDemoManager shared] checkAITrackedResult];
+        if ([FUDemoManager shared].shouldRender) {
+            [[FUTestRecorder shareRecorder] processFrameWithLog];
+            [FUDemoManager updateBeautyBlurEffect];
+            FURenderInput *input = [[FURenderInput alloc] init];
+            input.renderConfig.imageOrientation = FUImageOrientationUP;
+            input.pixelBuffer = pixelBuffer;
+            //开启重力感应，内部会自动计算正确方向，设置fuSetDefaultRotationMode，无须外面设置
+            input.renderConfig.gravityEnable = YES;
+            input.renderConfig.readBackToPixelBuffer = YES;
+            input.renderConfig.stickerFlipH = [FUDemoManager shared].flipx;
+            input.renderConfig.isFromFrontCamera = [FUDemoManager shared].flipx;
+            FURenderOutput *output = [[FURenderKit shareRenderKit] renderWithInput:input];
+        }
+    }
     size_t bufferWidth = 0;
     size_t bufferHeight = 0;
     
@@ -194,11 +209,6 @@ typedef void(^LiveStreamHandler)(NSError *error);
         self.cameraType = NIMNetCallCameraFront;
     }
     [[NIMAVChatSDK sharedSDK].netCallManager switchCamera:self.cameraType];
-    
-    if ([FUManager shareManager].isRender) {
-        [[FUManager shareManager] onCameraChange];
-    }
-
 }
 
 -(void)switchContainerToView:(UIView *)captureView
