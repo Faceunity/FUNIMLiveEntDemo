@@ -1828,23 +1828,25 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-NIMLiveDemo/Pods-NIMLiveDemo-resources.sh",
-				"${PODS_ROOT}/FURenderKit/Resources/graphics/aitype.bundle",
-				"${PODS_ROOT}/FURenderKit/Resources/graphics/body_slim.bundle",
-				"${PODS_ROOT}/FURenderKit/Resources/graphics/controller_cpp.bundle",
-				"${PODS_ROOT}/FURenderKit/Resources/graphics/face_beautification.bundle",
-				"${PODS_ROOT}/FURenderKit/Resources/graphics/face_makeup.bundle",
-				"${PODS_ROOT}/FURenderKit/Resources/graphics/fuzzytoonfilter.bundle",
-				"${PODS_ROOT}/FURenderKit/Resources/graphics/fxaa.bundle",
-				"${PODS_ROOT}/FURenderKit/Resources/graphics/tongue.bundle",
-				"${PODS_ROOT}/FURenderKit/Resources/model/ai_face_processor.bundle",
-				"${PODS_ROOT}/FURenderKit/Resources/model/ai_hand_processor.bundle",
-				"${PODS_ROOT}/FURenderKit/Resources/model/ai_human_processor.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/graphics/aitype.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/graphics/armeshv2.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/graphics/body_slim.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/graphics/controller_cpp.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/graphics/face_beautification.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/graphics/face_makeup.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/graphics/fuzzytoonfilter.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/graphics/fxaa.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/graphics/tongue.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/model/ai_face_processor.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/model/ai_hand_processor.bundle",
+				"${PODS_ROOT}/FURenderKit_nama/Resources/model/ai_human_processor.bundle",
 				"${PODS_ROOT}/NIMSDK/NIMAVChat/Resources/NMCVideoFilter.bundle",
 				"${PODS_ROOT}/SVProgressHUD/SVProgressHUD/SVProgressHUD.bundle",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputPaths = (
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/aitype.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/armeshv2.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/body_slim.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/controller_cpp.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/face_beautification.bundle",
@@ -1900,7 +1902,7 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-NIMLiveDemo/Pods-NIMLiveDemo-frameworks.sh",
-				"${PODS_ROOT}/FURenderKit/FURenderKit.framework",
+				"${PODS_ROOT}/FURenderKit_nama/FURenderKit.framework",
 				"${PODS_ROOT}/NIMSDK/NIMSDK/NIMSDK.framework",
 				"${PODS_ROOT}/NIMSDK/NIMAVChat/NIMAVChat.framework",
 				"${PODS_ROOT}/NIMSDK/NIMAVChat/NMC.framework",

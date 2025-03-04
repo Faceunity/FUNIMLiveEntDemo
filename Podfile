@@ -15,7 +15,7 @@ pod 'M80AttributedLabel', '~> 1.3.1'
 pod 'SSZipArchive', '~> 1.2'
 pod 'NIMSDK', '~> 8.2.0'
 pod 'Masonry'
-pod 'FURenderKit', '~> 8.7.0'
+pod 'FURenderKit_nama', '~> 8.13.0'
 
 end
 
